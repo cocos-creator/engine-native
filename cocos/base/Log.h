@@ -47,8 +47,8 @@ enum class LogLevel {
 
 class CC_DLL Log {
 public:
-    static LogLevel slogLevel; // for read only
 
+    static LogLevel slogLevel; // for read only
     static inline void     setLogLevel(LogLevel level) { slogLevel = level; }
     static inline FILE     *getLogFile() { return slogFile; }
     static void            setLogFile(const std::string &filename);

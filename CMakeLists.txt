@@ -411,9 +411,6 @@ cocos_source_files(
     cocos/base/etc2.h
     cocos/base/IndexHandle.h
     cocos/base/LinearAllocatorPool.h
-    cocos/base/Log.cpp
-    cocos/base/Log.h
-    cocos/base/Macros.h
     cocos/base/Map.h
     cocos/base/Object.h
     cocos/base/Random.h
@@ -1684,90 +1681,6 @@ elseif(WIN32)
     )
 endif()
 
-if(USE_SE_V8)
-    cocos_source_files(
-                     cocos/bindings/jswrapper/v8/Base.h
-                     cocos/bindings/jswrapper/v8/Class.cpp
-                     cocos/bindings/jswrapper/v8/Class.h
-                     cocos/bindings/jswrapper/v8/HelperMacros.h
-                     cocos/bindings/jswrapper/v8/Object.cpp
-                     cocos/bindings/jswrapper/v8/Object.h
-                     cocos/bindings/jswrapper/v8/ObjectWrap.cpp
-                     cocos/bindings/jswrapper/v8/ObjectWrap.h
-                     cocos/bindings/jswrapper/v8/ScriptEngine.cpp
-                     cocos/bindings/jswrapper/v8/ScriptEngine.h
-                     cocos/bindings/jswrapper/v8/SeApi.h
-                     cocos/bindings/jswrapper/v8/Utils.cpp
-                     cocos/bindings/jswrapper/v8/Utils.h
-    )
-    if(USE_V8_DEBUGGER)
-    cocos_source_files(
-                     cocos/bindings/jswrapper/v8/debugger/base64.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/env.cpp
-                     cocos/bindings/jswrapper/v8/debugger/env.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/http_parser.cpp
-                     cocos/bindings/jswrapper/v8/debugger/http_parser.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/inspector_agent.cpp
-                     cocos/bindings/jswrapper/v8/debugger/inspector_agent.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/inspector_io.cpp
-                     cocos/bindings/jswrapper/v8/debugger/inspector_io.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/inspector_socket.cpp
-                     cocos/bindings/jswrapper/v8/debugger/inspector_socket.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/inspector_socket_server.cpp
-                     cocos/bindings/jswrapper/v8/debugger/inspector_socket_server.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/node.cpp
-                     cocos/bindings/jswrapper/v8/debugger/node.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/node_debug_options.cpp
-                     cocos/bindings/jswrapper/v8/debugger/node_debug_options.h
-                     cocos/bindings/jswrapper/v8/debugger/node_mutex.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/SHA1.cpp
-                     cocos/bindings/jswrapper/v8/debugger/SHA1.h
-                     cocos/bindings/jswrapper/v8/debugger/util-inl.h
-        NO_WERROR    cocos/bindings/jswrapper/v8/debugger/util.cpp
-                     cocos/bindings/jswrapper/v8/debugger/util.h
-                     cocos/bindings/jswrapper/v8/debugger/v8_inspector_protocol_json.h
-    )
-    endif()
-endif()
-
-if(USE_SE_JSC)
-    cocos_source_files(
-                     cocos/bindings/jswrapper/jsc/Class.h
-                     cocos/bindings/jswrapper/jsc/EJConvert.h
-                     cocos/bindings/jswrapper/jsc/HelperMacros.h
-        NO_WERROR    cocos/bindings/jswrapper/jsc/Utils.cpp
-                     cocos/bindings/jswrapper/jsc/EJConvertTypedArray.h
-                     cocos/bindings/jswrapper/jsc/PlatformUtils.h
-        NO_WERROR    cocos/bindings/jswrapper/jsc/EJConvertTypedArray.m
-        NO_WERROR    cocos/bindings/jswrapper/jsc/EJConvert.m
-                     cocos/bindings/jswrapper/jsc/Object.h
-        NO_WERROR    cocos/bindings/jswrapper/jsc/Object.mm
-                     cocos/bindings/jswrapper/jsc/ScriptEngine.h
-        NO_WERROR    cocos/bindings/jswrapper/jsc/ScriptEngine.mm
-        NO_WERROR    cocos/bindings/jswrapper/jsc/PlatformUtils.mm
-                     cocos/bindings/jswrapper/jsc/SeApi.h
-        NO_WERROR    cocos/bindings/jswrapper/jsc/Class.cpp
-                     cocos/bindings/jswrapper/jsc/Utils.h
-                     cocos/bindings/jswrapper/jsc/Base.h
-    )
-endif()
-
-cocos_source_files(
-                 cocos/bindings/jswrapper/config.cpp
-                 cocos/bindings/jswrapper/config.h
-                 cocos/bindings/jswrapper/HandleObject.cpp
-                 cocos/bindings/jswrapper/HandleObject.h
-                 cocos/bindings/jswrapper/MappingUtils.cpp
-                 cocos/bindings/jswrapper/MappingUtils.h
-                 cocos/bindings/jswrapper/Object.h
-                 cocos/bindings/jswrapper/RefCounter.cpp
-                 cocos/bindings/jswrapper/RefCounter.h
-                 cocos/bindings/jswrapper/SeApi.h
-                 cocos/bindings/jswrapper/State.cpp
-                 cocos/bindings/jswrapper/State.h
-                 cocos/bindings/jswrapper/Value.cpp
-                 cocos/bindings/jswrapper/Value.h
-)
 
 cocos_source_files(
                  cocos/bindings/event/CustomEventTypes.h
@@ -2014,7 +1927,6 @@ if(ANDROID)
     find_library(LIB_GLESv2 NAMES GLESv2)
     target_link_libraries(cocos2d PUBLIC
         android
-        log
         OpenSLES
         ${LIB_EGL}
         ${LIB_GLESv2}
@@ -2117,3 +2029,126 @@ endif()
         #$<$<COMPILE_LANGUAGE:CXX>:${CWD}/cocos/cocos2d.h>
     #)
 #endif()
+########################################### cclog ###########################################
+add_library(cclog 
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/base/Log.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/base/Log.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/base/Macros.h
+)
+target_include_directories(cclog PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/cocos
+)
+if(ANDROID)
+    target_link_libraries(cclog PUBLIC log)
+elseif(OHOS)
+    target_link_libraries(cclog PUBLIC hilog_ndk.z)
+elseif(WINDOWS)
+    target_compile_definitions(cclog PUBLIC CC_STATIC)
+endif()
+
+target_link_libraries(cocos2d PUBLIC cclog)
+
+
+########################################### bindings ###########################################
+set(SE_SOURCES)
+
+if(USE_SE_V8)
+    list(APPEND SE_SOURCES
+        ${CWD}/cocos/bindings/jswrapper/v8/Base.h
+        ${CWD}/cocos/bindings/jswrapper/v8/Class.cpp
+        ${CWD}/cocos/bindings/jswrapper/v8/Class.h
+        ${CWD}/cocos/bindings/jswrapper/v8/HelperMacros.h
+        ${CWD}/cocos/bindings/jswrapper/v8/Object.cpp
+        ${CWD}/cocos/bindings/jswrapper/v8/Object.h
+        ${CWD}/cocos/bindings/jswrapper/v8/ObjectWrap.cpp
+        ${CWD}/cocos/bindings/jswrapper/v8/ObjectWrap.h
+        ${CWD}/cocos/bindings/jswrapper/v8/ScriptEngine.cpp
+        ${CWD}/cocos/bindings/jswrapper/v8/ScriptEngine.h
+        ${CWD}/cocos/bindings/jswrapper/v8/SeApi.h
+        ${CWD}/cocos/bindings/jswrapper/v8/Utils.cpp
+        ${CWD}/cocos/bindings/jswrapper/v8/Utils.h
+    )
+    if(USE_V8_DEBUGGER)
+        list(APPEND SE_SOURCES
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/base64.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/env.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/env.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/http_parser.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/http_parser.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/inspector_agent.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/inspector_agent.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/inspector_io.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/inspector_io.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/inspector_socket.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/inspector_socket.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/inspector_socket_server.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/inspector_socket_server.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/node.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/node.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/node_debug_options.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/node_debug_options.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/node_mutex.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/SHA1.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/SHA1.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/util-inl.h
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/util.cpp
+             ${CWD}/cocos/bindings/jswrapper/v8/debugger/util.h
+                    ${CWD}/cocos/bindings/jswrapper/v8/debugger/v8_inspector_protocol_json.h
+    )
+    endif()
+endif()
+
+if(USE_SE_JSC)
+        list(APPEND SE_SOURCES
+            ${CWD/cocos/bindings/jswrapper/jsc/Class.h
+            ${CWD/cocos/bindings/jswrapper/jsc/EJConvert.h
+            ${CWD/cocos/bindings/jswrapper/jsc/HelperMacros.h
+            ${CWD/cocos/bindings/jswrapper/jsc/Utils.cpp
+            ${CWD/cocos/bindings/jswrapper/jsc/EJConvertTypedArray.h
+            ${CWD/cocos/bindings/jswrapper/jsc/PlatformUtils.h
+            ${CWD/cocos/bindings/jswrapper/jsc/EJConvertTypedArray.m
+            ${CWD/cocos/bindings/jswrapper/jsc/EJConvert.m
+            ${CWD/cocos/bindings/jswrapper/jsc/Object.h
+            ${CWD/cocos/bindings/jswrapper/jsc/Object.mm
+            ${CWD/cocos/bindings/jswrapper/jsc/ScriptEngine.h
+            ${CWD/cocos/bindings/jswrapper/jsc/ScriptEngine.mm
+            ${CWD/cocos/bindings/jswrapper/jsc/PlatformUtils.mm
+            ${CWD/cocos/bindings/jswrapper/jsc/SeApi.h
+            ${CWD/cocos/bindings/jswrapper/jsc/Class.cpp
+            ${CWD/cocos/bindings/jswrapper/jsc/Utils.h
+            ${CWD/cocos/bindings/jswrapper/jsc/Base.h
+    )
+endif()
+
+list(APPEND SE_SOURCES
+        ${CWD}/cocos/bindings/jswrapper/config.cpp
+        ${CWD}/cocos/bindings/jswrapper/config.h
+        ${CWD}/cocos/bindings/jswrapper/HandleObject.cpp
+        ${CWD}/cocos/bindings/jswrapper/HandleObject.h
+        ${CWD}/cocos/bindings/jswrapper/MappingUtils.cpp
+        ${CWD}/cocos/bindings/jswrapper/MappingUtils.h
+        ${CWD}/cocos/bindings/jswrapper/Object.h
+        ${CWD}/cocos/bindings/jswrapper/RefCounter.cpp
+        ${CWD}/cocos/bindings/jswrapper/RefCounter.h
+        ${CWD}/cocos/bindings/jswrapper/SeApi.h
+        ${CWD}/cocos/bindings/jswrapper/State.cpp
+        ${CWD}/cocos/bindings/jswrapper/State.h
+        ${CWD}/cocos/bindings/jswrapper/Value.cpp
+        ${CWD}/cocos/bindings/jswrapper/Value.h
+)
+
+
+add_library(ccbindings ${SE_SOURCES})
+
+target_include_directories(ccbindings PUBLIC
+    ${CWD}/cocos
+    ${CWD}
+    ${CC_EXTERNAL_INCLUDES}
+)
+
+if(WINDOWS)
+    target_compile_definitions(cclog PUBLIC CC_STATIC)
+endif()
+
+target_link_libraries(ccbindings PUBLIC ${se_libs_name} cclog)
+target_link_libraries(cocos2d PUBLIC ccbindings)
