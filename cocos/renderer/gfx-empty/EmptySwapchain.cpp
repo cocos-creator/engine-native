@@ -23,32 +23,19 @@
  THE SOFTWARE.
 ****************************************************************************/
 
-#pragma once
-
-#include "base/Agent.h"
-#include "gfx-base/GFXTexture.h"
+#include "EmptySwapchain.h"
 
 namespace cc {
 namespace gfx {
 
-class CC_DLL TextureValidator final : public Agent<Texture> {
-public:
-    explicit TextureValidator(Texture *actor);
-    ~TextureValidator() override;
+void EmptySwapchain::doInit(const SwapchainInfo &info) {
+}
 
-    void sanityCheck();
+void EmptySwapchain::resize(uint width, uint height) {
+}
 
-    inline void renounceOwnership() { _ownTheActor = false; }
-
-protected:
-    void doInit(const TextureInfo &info) override;
-    void doInit(const TextureViewInfo &info) override;
-    void doDestroy() override;
-    void doResize(uint width, uint height, uint size) override;
-
-    uint _lastUpdateFrame = 0U;
-    bool _ownTheActor = true;
-};
+void EmptySwapchain::doDestroy() {
+}
 
 } // namespace gfx
 } // namespace cc

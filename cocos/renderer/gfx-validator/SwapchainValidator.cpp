@@ -23,32 +23,48 @@
  THE SOFTWARE.
 ****************************************************************************/
 
-#pragma once
+#include "base/CoreStd.h"
 
-#include "base/Agent.h"
-#include "gfx-base/GFXTexture.h"
+#include "SwapchainValidator.h"
+#include "ValidationUtils.h"
+#include "gfx-validator/TextureValidator.h"
 
 namespace cc {
 namespace gfx {
 
-class CC_DLL TextureValidator final : public Agent<Texture> {
-public:
-    explicit TextureValidator(Texture *actor);
-    ~TextureValidator() override;
+SwapchainValidator::SwapchainValidator(Swapchain *actor)
+: Agent<Swapchain>(actor) {
+    _typedID = generateObjectID<decltype(this)>();
+}
 
-    void sanityCheck();
+SwapchainValidator::~SwapchainValidator() {
+    DeviceResourceTracker<Swapchain>::erase(this);
+    CC_SAFE_DELETE(_depthStencilTexture);
+    CC_SAFE_DELETE(_colorTexture);
+    CC_SAFE_DELETE(_actor);
+}
 
-    inline void renounceOwnership() { _ownTheActor = false; }
+void SwapchainValidator::doInit(const SwapchainInfo &info) {
+    _actor->initialize(info);
 
-protected:
-    void doInit(const TextureInfo &info) override;
-    void doInit(const TextureViewInfo &info) override;
-    void doDestroy() override;
-    void doResize(uint width, uint height, uint size) override;
+    auto *colorTexture = CC_NEW(TextureValidator(_actor->getColorTexture()));
+    colorTexture->renounceOwnership();
+    _colorTexture = colorTexture;
+    DeviceResourceTracker<Texture>::push(_colorTexture);
 
-    uint _lastUpdateFrame = 0U;
-    bool _ownTheActor = true;
-};
+    auto *depthStencilTexture = CC_NEW(TextureValidator(_actor->getDepthStencilTexture()));
+    depthStencilTexture->renounceOwnership();
+    _depthStencilTexture = depthStencilTexture;
+    DeviceResourceTracker<Texture>::push(_depthStencilTexture);
+}
+
+void SwapchainValidator::doDestroy() {
+    _actor->destroy();
+}
+
+void SwapchainValidator::resize(uint width, uint height) {
+    _actor->resize(width, height);
+}
 
 } // namespace gfx
 } // namespace cc

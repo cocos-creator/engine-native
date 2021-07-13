@@ -85,6 +85,7 @@ using DescriptorSetLayoutList = vector<DescriptorSetLayout *>;
 
 enum class ObjectType {
     UNKNOWN,
+    SWAPCHAIN,
     BUFFER,
     TEXTURE,
     RENDER_PASS,
@@ -454,15 +455,36 @@ using TextureFlags = TextureFlagBit;
 CC_ENUM_BITWISE_OPERATORS(TextureFlagBit);
 
 enum class SampleCount {
-    X1  = 0x1,
-    X2  = 0x2,
-    X4  = 0x4,
-    X8  = 0x8,
-    X16 = 0x10,
-    X32 = 0x20,
-    X64 = 0x40,
+    ONE,
+    MULTIPLE,
+    MAX_AVAILABLE,
 };
 CC_ENUM_CONVERSION_OPERATOR(SampleCount);
+
+enum class VsyncMode {
+    // The application does not synchronizes with the vertical sync.
+    // If application renders faster than the display refreshes, frames are wasted and tearing may be observed.
+    // FPS is uncapped. Maximum power consumption. If unsupported, "ON" value will be used instead. Minimum latency.
+    OFF,
+    // The application is always synchronized with the vertical sync. Tearing does not happen.
+    // FPS is capped to the display's refresh rate. For fast applications, battery life is improved. Always supported.
+    ON,
+    // The application synchronizes with the vertical sync, but only if the application rendering speed is greater than refresh rate.
+    // Compared to OFF, there is no tearing. Compared to ON, the FPS will be improved for "slower" applications.
+    // If unsupported, "ON" value will be used instead. Recommended for most applications. Default if supported.
+    RELAXED,
+    // The presentation engine will always use the latest fully rendered image.
+    // Compared to OFF, no tearing will be observed.
+    // Compared to ON, battery power will be worse, especially for faster applications.
+    // If unsupported,  "OFF" will be attempted next.
+    MAILBOX,
+    // The application is capped to using half the vertical sync time.
+    // FPS artificially capped to Half the display speed (usually 30fps) to maintain battery.
+    // Best possible battery savings. Worst possible performance.
+    // Recommended for specific applications where battery saving is critical.
+    HALF,
+};
+CC_ENUM_CONVERSION_OPERATOR(VsyncMode);
 
 enum class Filter {
     NONE,
@@ -880,6 +902,22 @@ struct BindingMappingInfo {
     uint             flexibleSet = 0U;
 };
 
+struct SwapchainInfo {
+    void *      windowHandle = nullptr;
+    VsyncMode   vsyncMode    = VsyncMode::RELAXED;
+    SampleCount samples      = SampleCount::ONE;
+
+    Format colorFormat        = Format::UNKNOWN;
+    Format depthStencilFormat = Format::UNKNOWN;
+
+    uint width  = 0U;
+    uint height = 0U;
+};
+
+struct DeviceInfo {
+    BindingMappingInfo bindingMappingInfo;
+};
+
 struct BufferInfo {
     BufferUsage usage    = BufferUsageBit::NONE;
     MemoryUsage memUsage = MemoryUsageBit::NONE;
@@ -930,7 +968,7 @@ struct TextureInfo {
     TextureFlags flags      = TextureFlagBit::NONE;
     uint         layerCount = 1U;
     uint         levelCount = 1U;
-    SampleCount  samples    = SampleCount::X1;
+    SampleCount  samples    = SampleCount::ONE;
     uint         depth      = 1U;
 };
 
@@ -1074,7 +1112,7 @@ struct InputAssemblerInfo {
 
 struct ColorAttachment {
     Format                  format      = Format::UNKNOWN;
-    SampleCount             sampleCount = SampleCount::X1;
+    SampleCount             sampleCount = SampleCount::ONE;
     LoadOp                  loadOp      = LoadOp::CLEAR;
     StoreOp                 storeOp     = StoreOp::STORE;
     std::vector<AccessType> beginAccesses;
@@ -1086,7 +1124,7 @@ using ColorAttachmentList = vector<ColorAttachment>;
 
 struct DepthStencilAttachment {
     Format                  format         = Format::UNKNOWN;
-    SampleCount             sampleCount    = SampleCount::X1;
+    SampleCount             sampleCount    = SampleCount::ONE;
     LoadOp                  depthLoadOp    = LoadOp::CLEAR;
     StoreOp                 depthStoreOp   = StoreOp::STORE;
     LoadOp                  stencilLoadOp  = LoadOp::CLEAR;
@@ -1144,9 +1182,9 @@ struct TextureBarrierInfo {
 using TextureBarrierInfoList = vector<TextureBarrierInfo>;
 
 struct FramebufferInfo {
-    RenderPass *      renderPass = nullptr;
-    TextureList       colorTextures;                 // @ts-overrides { type: '(Texture | null)[]' }
-    Texture *         depthStencilTexture = nullptr; // @ts-nullable
+    RenderPass *renderPass = nullptr;
+    TextureList colorTextures;                 // @ts-overrides { type: '(Texture | null)[]' }
+    Texture *   depthStencilTexture = nullptr; // @ts-nullable
 };
 
 struct DescriptorSetLayoutBinding {

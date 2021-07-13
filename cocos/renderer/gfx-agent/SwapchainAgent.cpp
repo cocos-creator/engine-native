@@ -27,29 +27,31 @@
 #include "base/threading/MessageQueue.h"
 
 #include "DeviceAgent.h"
-#include "TextureAgent.h"
+#include "SwapchainAgent.h"
+#include "gfx-agent/TextureAgent.h"
 
 namespace cc {
 namespace gfx {
 
-TextureAgent::TextureAgent(Texture *actor)
-: Agent<Texture>(actor) {
+SwapchainAgent::SwapchainAgent(Swapchain *actor)
+: Agent<Swapchain>(actor) {
     _typedID = generateObjectID<decltype(this)>();
 }
 
-TextureAgent::~TextureAgent() {
-    if (_ownTheActor) {
-        ENQUEUE_MESSAGE_1(
-            DeviceAgent::getInstance()->getMessageQueue(),
-            TextureDestruct,
-            actor, _actor,
-            {
-                CC_SAFE_DELETE(actor);
-            });
-    }
+SwapchainAgent::~SwapchainAgent() {
+    CC_SAFE_DELETE(_depthStencilTexture);
+    CC_SAFE_DELETE(_colorTexture);
+
+    ENQUEUE_MESSAGE_1(
+        DeviceAgent::getInstance()->getMessageQueue(),
+        TextureDestruct,
+        actor, _actor,
+        {
+            CC_SAFE_DELETE(actor);
+        });
 }
 
-void TextureAgent::doInit(const TextureInfo &info) {
+void SwapchainAgent::doInit(const SwapchainInfo &info) {
     ENQUEUE_MESSAGE_2(
         DeviceAgent::getInstance()->getMessageQueue(),
         TextureInit,
@@ -58,33 +60,19 @@ void TextureAgent::doInit(const TextureInfo &info) {
         {
             actor->initialize(info);
         });
+
+    DeviceAgent::getInstance()->getMessageQueue()->kickAndWait();
+
+    auto *colorTexture = CC_NEW(TextureAgent(_actor->getColorTexture()));
+    colorTexture->renounceOwnership();
+    _colorTexture = colorTexture;
+
+    auto *depthStencilTexture = CC_NEW(TextureAgent(_actor->getDepthStencilTexture()));
+    depthStencilTexture->renounceOwnership();
+    _depthStencilTexture = depthStencilTexture;
 }
 
-void TextureAgent::doInit(const TextureViewInfo &info) {
-    TextureViewInfo actorInfo = info;
-    actorInfo.texture         = static_cast<TextureAgent *>(info.texture)->getActor();
-
-    ENQUEUE_MESSAGE_2(
-        DeviceAgent::getInstance()->getMessageQueue(),
-        TextureViewInit,
-        actor, getActor(),
-        info, actorInfo,
-        {
-            actor->initialize(info);
-        });
-}
-
-void TextureAgent::doDestroy() {
-    ENQUEUE_MESSAGE_1(
-        DeviceAgent::getInstance()->getMessageQueue(),
-        TextureDestroy,
-        actor, getActor(),
-        {
-            actor->destroy();
-        });
-}
-
-void TextureAgent::doResize(uint width, uint height, uint /*size*/) {
+void SwapchainAgent::resize(uint width, uint height) {
     ENQUEUE_MESSAGE_3(
         DeviceAgent::getInstance()->getMessageQueue(),
         TextureResize,
@@ -93,6 +81,16 @@ void TextureAgent::doResize(uint width, uint height, uint /*size*/) {
         height, height,
         {
             actor->resize(width, height);
+        });
+}
+
+void SwapchainAgent::doDestroy() {
+    ENQUEUE_MESSAGE_1(
+        DeviceAgent::getInstance()->getMessageQueue(),
+        TextureDestroy,
+        actor, getActor(),
+        {
+            actor->destroy();
         });
 }
 

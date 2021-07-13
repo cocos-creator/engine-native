@@ -39,8 +39,8 @@ public:
 
     void initialize(const TextureInfo &info);
     void initialize(const TextureViewInfo &info);
-    void destroy();
     void resize(uint width, uint height);
+    void destroy();
 
     inline TextureType  getType() const { return _type; }
     inline TextureUsage getUsage() const { return _usage; }
@@ -72,7 +72,7 @@ protected:
     uint         _baseLayer     = 0U;
     uint         _layerCount    = 1U;
     uint         _size          = 0U;
-    SampleCount  _samples       = SampleCount::X1;
+    SampleCount  _samples       = SampleCount::ONE;
     TextureFlags _flags         = TextureFlagBit::NONE;
     bool         _isTextureView = false;
 };

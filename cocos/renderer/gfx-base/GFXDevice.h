@@ -40,6 +40,7 @@
 #include "GFXRenderPass.h"
 #include "GFXSampler.h"
 #include "GFXShader.h"
+#include "GFXSwapchain.h"
 #include "GFXTexture.h"
 #include "GFXTextureBarrier.h"
 
@@ -55,16 +56,11 @@ public:
     bool initialize(const DeviceInfo &info);
     void destroy();
 
-    virtual void resize(uint width, uint height) = 0;
     virtual void acquire()                       = 0;
     virtual void present()                       = 0;
 
     virtual void flushCommands(CommandBuffer *const *cmdBuffs, uint count) {}
 
-    virtual SurfaceTransform getSurfaceTransform() const { return _transform; }
-    virtual uint             getWidth() const { return _width; }
-    virtual uint             getHeight() const { return _height; }
-    virtual float            devicePixelRatio() const { return _pixelRatio; }
     virtual MemoryStatus &   getMemoryStatus() { return _memoryStatus; }
     virtual uint             getNumDrawCalls() const { return _numDrawCalls; }
     virtual uint             getNumInstances() const { return _numInstances; }
@@ -72,6 +68,7 @@ public:
 
     inline CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info);
     inline Queue *              createQueue(const QueueInfo &info);
+    inline Swapchain *          createSwapchain(const SwapchainInfo &info);
     inline Buffer *             createBuffer(const BufferInfo &info);
     inline Buffer *             createBuffer(const BufferViewInfo &info);
     inline Texture *            createTexture(const TextureInfo &info);
@@ -93,7 +90,6 @@ public:
 
     inline void copyBuffersToTexture(const BufferDataList &buffers, Texture *dst, const BufferTextureCopyList &regions);
     inline void flushCommands(const vector<CommandBuffer *> &cmdBuffs);
-    inline void flushCommandsForJS(const vector<CommandBuffer *> &cmdBuffs);
 
     inline Queue *           getQueue() const { return _queue; }
     inline CommandBuffer *   getCommandBuffer() const { return _cmdBuff; }
@@ -104,10 +100,9 @@ public:
     inline const String &    getVendor() const { return _vendor; }
     inline bool              hasFeature(Feature feature) const { return _features[static_cast<uint>(feature)]; }
 
+    inline Format                    getColorFormat() const { return _colorFormat; }
+    inline Format                    getDepthStencilFormat() const { return _depthStencilFormat; }
     inline const BindingMappingInfo &bindingMappingInfo() const { return _bindingMappingInfo; }
-
-    Format getColorFormat() const;
-    Format getDepthStencilFormat() const;
 
 protected:
     static Device *instance;
@@ -123,6 +118,7 @@ protected:
 
     virtual CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info, bool hasAgent) = 0;
     virtual Queue *              createQueue()                                                     = 0;
+    virtual Swapchain *          createSwapchain()                                                 = 0;
     virtual Buffer *             createBuffer()                                                    = 0;
     virtual Texture *            createTexture()                                                   = 0;
     virtual Sampler *            createSampler()                                                   = 0;
@@ -145,30 +141,26 @@ protected:
     virtual void bindRenderContext(bool bound) {}
     virtual void bindDeviceContext(bool bound) {}
 
-    inline Context *getContext() const { return _context; }
-
-    API                _api       = API::UNKNOWN;
-    SurfaceTransform   _transform = SurfaceTransform::IDENTITY;
     String             _deviceName;
     String             _renderer;
     String             _vendor;
     String             _version;
+    API                _api{API::UNKNOWN};
     bool               _multithreadedSubmission{true};
-    uint               _width{0};
-    uint               _height{0};
-    float              _pixelRatio{1.0F};
-    MemoryStatus       _memoryStatus;
-    uintptr_t          _windowHandle{0};
-    Context *          _context{nullptr};
-    Queue *            _queue{nullptr};
-    CommandBuffer *    _cmdBuff{nullptr};
-    uint               _numDrawCalls{0U};
-    uint               _numInstances{0U};
-    uint               _numTriangles{0U};
-    BindingMappingInfo _bindingMappingInfo;
+    Format             _colorFormat{Format::UNKNOWN};
+    Format             _depthStencilFormat{Format::UNKNOWN};
     DeviceCaps         _caps;
+    BindingMappingInfo _bindingMappingInfo;
 
     std::array<bool, static_cast<size_t>(Feature::COUNT)> _features;
+
+    Queue *        _queue{nullptr};
+    CommandBuffer *_cmdBuff{nullptr};
+
+    uint             _numDrawCalls{0U};
+    uint             _numInstances{0U};
+    uint             _numTriangles{0U};
+    MemoryStatus     _memoryStatus;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -181,6 +173,12 @@ CommandBuffer *Device::createCommandBuffer(const CommandBufferInfo &info) {
 
 Queue *Device::createQueue(const QueueInfo &info) {
     Queue *res = createQueue();
+    res->initialize(info);
+    return res;
+}
+
+Swapchain *Device::createSwapchain(const SwapchainInfo &info) {
+    Swapchain *res = createSwapchain();
     res->initialize(info);
     return res;
 }
@@ -280,10 +278,6 @@ void Device::copyBuffersToTexture(const BufferDataList &buffers, Texture *dst, c
 }
 
 void Device::flushCommands(const vector<CommandBuffer *> &cmdBuffs) {
-    flushCommands(cmdBuffs.data(), utils::toUint(cmdBuffs.size()));
-}
-
-void Device::flushCommandsForJS(const vector<CommandBuffer *> &cmdBuffs) {
     flushCommands(cmdBuffs.data(), utils::toUint(cmdBuffs.size()));
 }
 

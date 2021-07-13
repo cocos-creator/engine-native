@@ -38,6 +38,7 @@
 #include "QueueAgent.h"
 #include "RenderPassAgent.h"
 #include "SamplerAgent.h"
+#include "SwapchainAgent.h"
 #include "ShaderAgent.h"
 #include "TextureAgent.h"
 #include "base/threading/ThreadSafeLinearAllocator.h"
@@ -65,7 +66,6 @@ bool DeviceAgent::doInit(const DeviceInfo &info) {
         return false;
     }
 
-    _context                                            = _actor->getContext();
     _api                                                = _actor->getGfxAPI();
     _deviceName                                         = _actor->getDeviceName();
     _queue                                              = CC_NEW(QueueAgent(_actor->getQueue()));
@@ -107,17 +107,6 @@ void DeviceAgent::doDestroy() {
 
     _mainMessageQueue->terminateConsumerThread();
     CC_SAFE_DELETE(_mainMessageQueue);
-}
-
-void DeviceAgent::resize(uint width, uint height) {
-    ENQUEUE_MESSAGE_3(
-        _mainMessageQueue, DeviceResize,
-        actor, _actor,
-        width, width,
-        height, height,
-        {
-            actor->resize(width, height);
-        });
 }
 
 void DeviceAgent::acquire() {
@@ -209,6 +198,11 @@ CommandBuffer *DeviceAgent::createCommandBuffer(const CommandBufferInfo &info, b
 Queue *DeviceAgent::createQueue() {
     Queue *actor = _actor->createQueue();
     return CC_NEW(QueueAgent(actor));
+}
+
+Swapchain *DeviceAgent::createSwapchain() {
+    Swapchain *actor = _actor->createSwapchain();
+    return CC_NEW(SwapchainAgent(actor));
 }
 
 Buffer *DeviceAgent::createBuffer() {

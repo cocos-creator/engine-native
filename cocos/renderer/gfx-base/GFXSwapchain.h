@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2020-2021 Xiamen Yaji Software Co., Ltd.
+ Copyright (c) 2019-2021 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos.com
 
@@ -25,29 +25,42 @@
 
 #pragma once
 
-#include "base/Agent.h"
-#include "gfx-base/GFXTexture.h"
+#include "GFXTexture.h"
 
 namespace cc {
 namespace gfx {
 
-class CC_DLL TextureValidator final : public Agent<Texture> {
+class CC_DLL Swapchain : public GFXObject {
 public:
-    explicit TextureValidator(Texture *actor);
-    ~TextureValidator() override;
+    Swapchain();
+    ~Swapchain() override;
 
-    void sanityCheck();
+    void initialize(const SwapchainInfo &info);
+    void destroy();
 
-    inline void renounceOwnership() { _ownTheActor = false; }
+    virtual void resize(uint width, uint height) = 0;
+
+    inline void *    getWindowHandle() { return _windowHandle; }
+    inline VsyncMode getVSyncMode() { return _vsyncMode; }
+
+    inline uint32_t getWidth() { return _colorTexture->getWidth(); }
+    inline uint32_t getHeight() { return _colorTexture->getHeight(); }
+
+    inline Texture *getColorTexture() { return _colorTexture; }
+    inline Texture *getDepthStencilTexture() { return _depthStencilTexture; }
+
+    virtual SurfaceTransform getSurfaceTransform() const { return _transform; }
 
 protected:
-    void doInit(const TextureInfo &info) override;
-    void doInit(const TextureViewInfo &info) override;
-    void doDestroy() override;
-    void doResize(uint width, uint height, uint size) override;
+    virtual void doInit(const SwapchainInfo &info) = 0;
+    virtual void doDestroy()                       = 0;
 
-    uint _lastUpdateFrame = 0U;
-    bool _ownTheActor = true;
+    void *           _windowHandle{nullptr};
+    VsyncMode        _vsyncMode{VsyncMode::RELAXED};
+    SurfaceTransform _transform{SurfaceTransform::IDENTITY};
+
+    Texture *_colorTexture{nullptr};
+    Texture *_depthStencilTexture{nullptr};
 };
 
 } // namespace gfx

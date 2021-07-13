@@ -26,6 +26,7 @@
 #pragma once
 
 #include "gfx-base/GFXDevice.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
@@ -50,15 +51,16 @@ public:
     using Device::createRenderPass;
     using Device::createSampler;
     using Device::createShader;
+    using Device::createSwapchain;
     using Device::createTexture;
     using Device::createTextureBarrier;
 
-    void resize(uint width, uint height) override;
     void acquire() override;
     void present() override;
 
     CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info, bool emptyhas) override;
     Queue *              createQueue() override;
+    Swapchain *          createSwapchain() override;
     Buffer *             createBuffer() override;
     Texture *            createTexture() override;
     Sampler *            createSampler() override;

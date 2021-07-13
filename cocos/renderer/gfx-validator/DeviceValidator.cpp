@@ -38,8 +38,10 @@
 #include "RenderPassValidator.h"
 #include "SamplerValidator.h"
 #include "ShaderValidator.h"
+#include "SwapchainValidator.h"
 #include "TextureValidator.h"
 #include "ValidationUtils.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
@@ -64,7 +66,6 @@ bool DeviceValidator::doInit(const DeviceInfo &info) {
         return false;
     }
 
-    _context                 = _actor->getContext();
     _api                     = _actor->getGfxAPI();
     _deviceName              = _actor->getDeviceName();
     _queue                   = CC_NEW(QueueValidator(_actor->getQueue()));
@@ -100,6 +101,7 @@ void DeviceValidator::doDestroy() {
 
     DeviceResourceTracker<CommandBuffer>::checkEmpty();
     DeviceResourceTracker<Queue>::checkEmpty();
+    DeviceResourceTracker<Swapchain>::checkEmpty();
     DeviceResourceTracker<Buffer>::checkEmpty();
     DeviceResourceTracker<Texture>::checkEmpty();
     DeviceResourceTracker<Sampler>::checkEmpty();
@@ -113,10 +115,6 @@ void DeviceValidator::doDestroy() {
     DeviceResourceTracker<PipelineState>::checkEmpty();
 
     _actor->destroy();
-}
-
-void DeviceValidator::resize(uint width, uint height) {
-    _actor->resize(width, height);
 }
 
 void DeviceValidator::acquire() {
@@ -139,6 +137,13 @@ Queue *DeviceValidator::createQueue() {
     Queue *actor  = _actor->createQueue();
     Queue *result = CC_NEW(QueueValidator(actor));
     DeviceResourceTracker<Queue>::push(result);
+    return result;
+}
+
+Swapchain *DeviceValidator::createSwapchain() {
+    Swapchain *actor  = _actor->createSwapchain();
+    Swapchain *result = CC_NEW(SwapchainValidator(actor));
+    DeviceResourceTracker<Swapchain>::push(result);
     return result;
 }
 

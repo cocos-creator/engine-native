@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2019-2021 Xiamen Yaji Software Co., Ltd.
+ Copyright (c) 2020-2021 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos.com
 
@@ -23,27 +23,20 @@
  THE SOFTWARE.
 ****************************************************************************/
 
-#include "base/CoreStd.h"
+#pragma once
 
-#include "GFXContext.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
 
-Context::Context() = default;
-
-Context::~Context() = default;
-
-bool Context::initialize(const ContextInfo& info) {
-    _vsyncMode    = info.vsyncMode;
-    _windowHandle = info.windowHandle;
-
-    return doInit(info);
-}
-
-void Context::destroy() {
-    doDestroy();
-}
+class CC_DLL EmptySwapchain final : public Swapchain {
+public:
+protected:
+    void doInit(const SwapchainInfo &info) override;
+    void resize(uint width, uint height) override;
+    void doDestroy() override;
+};
 
 } // namespace gfx
 } // namespace cc

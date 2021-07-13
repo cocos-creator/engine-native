@@ -83,7 +83,7 @@ void ReflectionComp::init(gfx::Device *dev, gfx::Texture *lightTex, gfx::Texture
 
     gfx::ColorAttachment cAttch = {
         _reflectionTex->getFormat(),
-        gfx::SampleCount::X1,
+        gfx::SampleCount::ONE,
         gfx::LoadOp::CLEAR,
         gfx::StoreOp::STORE,
         {gfx::AccessType::NONE},

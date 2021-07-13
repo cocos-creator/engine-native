@@ -287,7 +287,7 @@ bool DeferredPipeline::activeRenderer() {
 
     gfx::ColorAttachment color = {
         gfx::Format::RGBA16F,
-        gfx::SampleCount::X1,
+        gfx::SampleCount::ONE,
         gfx::LoadOp::CLEAR,
         gfx::StoreOp::STORE,
         {},
@@ -300,7 +300,7 @@ bool DeferredPipeline::activeRenderer() {
 
     gfx::DepthStencilAttachment depth = {
         _device->getDepthStencilFormat(),
-        gfx::SampleCount::X1,
+        gfx::SampleCount::ONE,
         gfx::LoadOp::CLEAR,
         gfx::StoreOp::STORE,
         gfx::LoadOp::CLEAR,
@@ -312,7 +312,7 @@ bool DeferredPipeline::activeRenderer() {
 
     gfx::ColorAttachment cAttch = {
         gfx::Format::RGBA16F,
-        gfx::SampleCount::X1,
+        gfx::SampleCount::ONE,
         gfx::LoadOp::CLEAR,
         gfx::StoreOp::STORE,
         {},
@@ -324,7 +324,7 @@ bool DeferredPipeline::activeRenderer() {
 
     lightPass.depthStencilAttachment = {
         _device->getDepthStencilFormat(),
-        gfx::SampleCount::X1,
+        gfx::SampleCount::ONE,
         gfx::LoadOp::LOAD,
         gfx::StoreOp::DISCARD,
         gfx::LoadOp::DISCARD,

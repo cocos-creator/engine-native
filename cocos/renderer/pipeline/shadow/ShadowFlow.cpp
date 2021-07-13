@@ -178,7 +178,7 @@ void ShadowFlow::initShadowFrameBuffer(RenderPipeline *pipeline, const scene::Li
     
     const gfx::ColorAttachment colorAttachment = {
         format,
-        gfx::SampleCount::X1,
+        gfx::SampleCount::ONE,
         gfx::LoadOp::CLEAR,
         gfx::StoreOp::STORE,
         {},
@@ -187,7 +187,7 @@ void ShadowFlow::initShadowFrameBuffer(RenderPipeline *pipeline, const scene::Li
 
     const gfx::DepthStencilAttachment depthStencilAttachment = {
         device->getDepthStencilFormat(),
-        gfx::SampleCount::X1,
+        gfx::SampleCount::ONE,
         gfx::LoadOp::CLEAR,
         gfx::StoreOp::DISCARD,
         gfx::LoadOp::CLEAR,

@@ -54,12 +54,12 @@ public:
     using Device::createTexture;
     using Device::createTextureBarrier;
 
-    void resize(uint width, uint height) override;
     void acquire() override;
     void present() override;
 
     CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info, bool hasAgent) override;
     Queue *              createQueue() override;
+    Swapchain *          createSwapchain() override;
     Buffer *             createBuffer() override;
     Texture *            createTexture() override;
     Sampler *            createSampler() override;
@@ -77,9 +77,6 @@ public:
     void                 copyTextureToBuffers(Texture *src, uint8_t *const *buffers, const BufferTextureCopy *region, uint count) override;
 
     void             flushCommands(CommandBuffer *const *cmdBuffs, uint count) override;
-    SurfaceTransform getSurfaceTransform() const override { return _actor->getSurfaceTransform(); }
-    uint             getWidth() const override { return _actor->getWidth(); }
-    uint             getHeight() const override { return _actor->getHeight(); }
     MemoryStatus &   getMemoryStatus() override { return _actor->getMemoryStatus(); }
     uint             getNumDrawCalls() const override { return _actor->getNumDrawCalls(); }
     uint             getNumInstances() const override { return _actor->getNumInstances(); }

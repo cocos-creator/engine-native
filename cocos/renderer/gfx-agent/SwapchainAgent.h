@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2019-2021 Xiamen Yaji Software Co., Ltd.
+ Copyright (c) 2020-2021 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos.com
 
@@ -25,35 +25,24 @@
 
 #pragma once
 
-#include "GFXObject.h"
+#include "base/Agent.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
 
-class CC_DLL Context : public Object {
+class CC_DLL SwapchainAgent final : public Agent<Swapchain> {
 public:
-    Context();
-    ~Context() override;
+    explicit SwapchainAgent(Swapchain *actor);
+    ~SwapchainAgent() override;
 
-    bool initialize(const ContextInfo &info);
-    void destroy();
+    void resize(uint width, uint height) override;
 
-    virtual void present() = 0;
-
-    inline Context * getSharedContext() const { return _sharedContext; }
-    inline VsyncMode getVsyncMode() const { return _vsyncMode; }
-    inline Format    getColorFormat() const { return _colorFmt; }
-    inline Format    getDepthStencilFormat() const { return _depthStencilFmt; }
+    SurfaceTransform getSurfaceTransform() const override { return _actor->getSurfaceTransform(); }
 
 protected:
-    virtual bool doInit(const ContextInfo &info) = 0;
-    virtual void doDestroy()                     = 0;
-
-    uintptr_t _windowHandle    = 0;
-    Context * _sharedContext   = nullptr;
-    VsyncMode _vsyncMode       = VsyncMode::OFF;
-    Format    _colorFmt        = Format::UNKNOWN;
-    Format    _depthStencilFmt = Format::UNKNOWN;
+    void doInit(const SwapchainInfo &info) override;
+    void doDestroy() override;
 };
 
 } // namespace gfx
