@@ -39,9 +39,6 @@ SwapchainAgent::SwapchainAgent(Swapchain *actor)
 }
 
 SwapchainAgent::~SwapchainAgent() {
-    CC_SAFE_DELETE(_depthStencilTexture);
-    CC_SAFE_DELETE(_colorTexture);
-
     ENQUEUE_MESSAGE_1(
         DeviceAgent::getInstance()->getMessageQueue(), SwapchainDestruct,
         actor, _actor,
@@ -71,6 +68,9 @@ void SwapchainAgent::doInit(const SwapchainInfo &info) {
 }
 
 void SwapchainAgent::doDestroy() {
+    CC_SAFE_DELETE(_depthStencilTexture);
+    CC_SAFE_DELETE(_colorTexture);
+
     ENQUEUE_MESSAGE_1(
         DeviceAgent::getInstance()->getMessageQueue(), SwapchainDestroy,
         actor, getActor(),

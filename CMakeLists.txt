@@ -503,7 +503,7 @@ elseif(USE_JOB_SYSTEM_TBB)
         cocos/base/job-system/job-system-tbb/TBBJobSystem.h
         cocos/base/job-system/job-system-tbb/TBBJobSystem.cpp
     )
-else() 
+else()
     cocos_source_files(
         cocos/base/job-system/job-system-dummy/DummyJobGraph.h
         cocos/base/job-system/job-system-dummy/DummyJobGraph.cpp
@@ -737,8 +737,6 @@ cocos_source_files(
                  cocos/renderer/gfx-base/GFXBuffer.h
                  cocos/renderer/gfx-base/GFXCommandBuffer.cpp
                  cocos/renderer/gfx-base/GFXCommandBuffer.h
-                 cocos/renderer/gfx-base/GFXContext.cpp
-                 cocos/renderer/gfx-base/GFXContext.h
                  cocos/renderer/gfx-base/GFXDef.cpp
                  cocos/renderer/gfx-base/GFXDef.h
                  cocos/renderer/gfx-base/GFXDef-common.h
@@ -766,6 +764,8 @@ cocos_source_files(
                  cocos/renderer/gfx-base/GFXSampler.h
                  cocos/renderer/gfx-base/GFXShader.cpp
                  cocos/renderer/gfx-base/GFXShader.h
+                 cocos/renderer/gfx-base/GFXSwapchain.cpp
+                 cocos/renderer/gfx-base/GFXSwapchain.h
                  cocos/renderer/gfx-base/GFXTexture.cpp
                  cocos/renderer/gfx-base/GFXTexture.h
                  cocos/renderer/gfx-base/GFXTextureBarrier.cpp
@@ -835,8 +835,6 @@ cocos_source_files(
                  cocos/renderer/gfx-empty/EmptyBuffer.cpp
                  cocos/renderer/gfx-empty/EmptyCommandBuffer.h
                  cocos/renderer/gfx-empty/EmptyCommandBuffer.cpp
-                 cocos/renderer/gfx-empty/EmptyContext.h
-                 cocos/renderer/gfx-empty/EmptyContext.cpp
                  cocos/renderer/gfx-empty/EmptyDescriptorSet.h
                  cocos/renderer/gfx-empty/EmptyDescriptorSet.cpp
                  cocos/renderer/gfx-empty/EmptyDescriptorSetLayout.h
@@ -859,6 +857,8 @@ cocos_source_files(
                  cocos/renderer/gfx-empty/EmptySampler.cpp
                  cocos/renderer/gfx-empty/EmptyShader.h
                  cocos/renderer/gfx-empty/EmptyShader.cpp
+                 cocos/renderer/gfx-empty/EmptySwapchain.h
+                 cocos/renderer/gfx-empty/EmptySwapchain.cpp
                  cocos/renderer/gfx-empty/EmptyTexture.h
                  cocos/renderer/gfx-empty/EmptyTexture.cpp
 
@@ -1988,7 +1988,7 @@ target_compile_definitions(cocos2d
         ${CC_EXTERNAL_PRIVATE_DEFINITIONS}
 )
 if(NOT OHOS)
-    target_include_directories(cocos2d PUBLIC 
+    target_include_directories(cocos2d PUBLIC
         ${CWD}/external/sources/EGL
         ${CWD}/external/sources/khronos
     )

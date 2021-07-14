@@ -56,6 +56,8 @@ public:
     inline bool         isTextureView() const { return _isTextureView; }
 
 protected:
+    friend class Swapchain;
+
     virtual void doInit(const TextureInfo &info)              = 0;
     virtual void doInit(const TextureViewInfo &info)          = 0;
     virtual void doDestroy()                                  = 0;

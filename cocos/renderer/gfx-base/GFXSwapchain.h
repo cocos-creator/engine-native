@@ -43,10 +43,7 @@ public:
     virtual void resize(uint32_t width, uint32_t height) = 0;
 
     virtual void destroySurface() = 0;
-    inline void  createSurface(void *windowHandle) {
-        doCreateSurface(windowHandle);
-        _windowHandle = windowHandle;
-    }
+    inline void  createSurface(void *windowHandle);
 
     inline void *    getWindowHandle() { return _windowHandle; }
     inline VsyncMode getVSyncMode() { return _vsyncMode; }
@@ -64,6 +61,9 @@ protected:
     virtual void doDestroy()                         = 0;
     virtual void doCreateSurface(void *windowHandle) = 0;
 
+    template <typename T>
+    void createSwapchainTextures(const SwapchainInfo &info);
+
     void *           _windowHandle{nullptr};
     VsyncMode        _vsyncMode{VsyncMode::RELAXED};
     SurfaceTransform _transform{SurfaceTransform::IDENTITY};
@@ -71,6 +71,31 @@ protected:
     Texture *_colorTexture{nullptr};
     Texture *_depthStencilTexture{nullptr};
 };
+
+///////////////////////////////////////////////////////////
+
+void Swapchain::createSurface(void *windowHandle) {
+    doCreateSurface(windowHandle);
+    _windowHandle = windowHandle;
+}
+
+template <typename T>
+void Swapchain::createSwapchainTextures(const SwapchainInfo &info) {
+    _colorTexture          = CC_NEW(T);
+    _colorTexture->_usage  = TextureUsageBit::COLOR_ATTACHMENT;
+    _colorTexture->_format = info.colorFormat;
+    _colorTexture->_size   = formatSize(info.colorFormat, info.width, info.height, 1);
+
+    _depthStencilTexture          = CC_NEW(T);
+    _depthStencilTexture->_usage  = TextureUsageBit::DEPTH_STENCIL_ATTACHMENT;
+    _depthStencilTexture->_format = info.depthStencilFormat;
+    _depthStencilTexture->_size   = formatSize(info.depthStencilFormat, info.width, info.height, 1);
+
+    _colorTexture->_width = _depthStencilTexture->_width = info.width;
+    _colorTexture->_height = _depthStencilTexture->_height = info.height;
+    _colorTexture->_samples = _depthStencilTexture->_samples = info.samples;
+    _colorTexture->_isTextureView = _depthStencilTexture->_isTextureView = true;
+}
 
 } // namespace gfx
 } // namespace cc

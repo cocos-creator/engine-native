@@ -85,7 +85,6 @@ void Texture::initialize(const TextureViewInfo &info) {
     _samples       = info.texture->getSamples();
     _flags         = info.texture->getFlags();
     _size          = formatSize(_format, _width, _height, _depth);
-    _isTextureView = true;
 
     doInit(info);
 }

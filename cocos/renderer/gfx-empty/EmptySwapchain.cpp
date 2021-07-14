@@ -25,14 +25,18 @@
 
 #include "base/CoreStd.h"
 #include "EmptySwapchain.h"
+#include "EmptyTexture.h"
 
 namespace cc {
 namespace gfx {
 
 void EmptySwapchain::doInit(const SwapchainInfo &info) {
+    createSwapchainTextures<EmptyTexture>(info);
 }
 
 void EmptySwapchain::doDestroy() {
+    CC_SAFE_DESTROY(_colorTexture);
+    CC_SAFE_DESTROY(_depthStencilTexture);
 }
 
 void EmptySwapchain::resize(uint width, uint height) {
