@@ -36,13 +36,18 @@ public:
     explicit SwapchainValidator(Swapchain *actor);
     ~SwapchainValidator() override;
 
-    void resize(uint width, uint height) override;
+    void acquire() override;
+    void present() override;
+    void resize(uint32_t width, uint32_t height) override;
+
+    void destroySurface() override;
 
     SurfaceTransform getSurfaceTransform() const override { return _actor->getSurfaceTransform(); }
 
 protected:
     void doInit(const SwapchainInfo &info) override;
     void doDestroy() override;
+    void doCreateSurface(void *windowHandle) override;
 };
 
 } // namespace gfx

@@ -117,12 +117,7 @@ void DeviceValidator::doDestroy() {
     _actor->destroy();
 }
 
-void DeviceValidator::acquire() {
-    _actor->acquire();
-}
-
-void DeviceValidator::present() {
-    _actor->present();
+void DeviceValidator::frameBoundary() {
     ++_currentFrame;
 }
 

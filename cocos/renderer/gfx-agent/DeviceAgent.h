@@ -63,9 +63,6 @@ public:
     using Device::createTexture;
     using Device::createTextureBarrier;
 
-    void acquire() override;
-    void present() override;
-
     CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info, bool hasAgent) override;
     Queue *              createQueue() override;
     Swapchain *          createSwapchain() override;
@@ -92,6 +89,7 @@ public:
 
     uint getCurrentIndex() const { return _currentIndex; }
     void setMultithreaded(bool multithreaded);
+    void frameBoundary();
 
     inline MessageQueue *getMessageQueue() const { return _mainMessageQueue; }
 
@@ -105,9 +103,6 @@ protected:
 
     bool doInit(const DeviceInfo &info) override;
     void doDestroy() override;
-
-    void releaseSurface(uintptr_t windowHandle) override;
-    void acquireSurface(uintptr_t windowHandle) override;
 
     bool          _multithreaded{false};
     MessageQueue *_mainMessageQueue{nullptr};

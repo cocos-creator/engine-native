@@ -23,6 +23,7 @@
  THE SOFTWARE.
 ****************************************************************************/
 
+#include "base/CoreStd.h"
 #include "EmptySwapchain.h"
 
 namespace cc {
@@ -31,10 +32,23 @@ namespace gfx {
 void EmptySwapchain::doInit(const SwapchainInfo &info) {
 }
 
+void EmptySwapchain::doDestroy() {
+}
+
 void EmptySwapchain::resize(uint width, uint height) {
 }
 
-void EmptySwapchain::doDestroy() {
+void EmptySwapchain::acquire() {
+}
+
+void EmptySwapchain::present() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+}
+
+void EmptySwapchain::destroySurface() {
+}
+
+void EmptySwapchain::doCreateSurface(void *windowHandle) {
 }
 
 } // namespace gfx

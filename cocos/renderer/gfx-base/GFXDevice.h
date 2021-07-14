@@ -56,9 +56,6 @@ public:
     bool initialize(const DeviceInfo &info);
     void destroy();
 
-    virtual void acquire()                       = 0;
-    virtual void present()                       = 0;
-
     virtual void flushCommands(CommandBuffer *const *cmdBuffs, uint count) {}
 
     virtual MemoryStatus &   getMemoryStatus() { return _memoryStatus; }
@@ -132,11 +129,6 @@ protected:
     virtual PipelineState *      createPipelineState()                                             = 0;
     virtual GlobalBarrier *      createGlobalBarrier()                                             = 0;
     virtual TextureBarrier *     createTextureBarrier()                                            = 0;
-
-    // On minimize
-    virtual void releaseSurface(uintptr_t windowHandle) {}
-    // On restore
-    virtual void acquireSurface(uintptr_t windowHandle) {}
 
     virtual void bindRenderContext(bool bound) {}
     virtual void bindDeviceContext(bool bound) {}

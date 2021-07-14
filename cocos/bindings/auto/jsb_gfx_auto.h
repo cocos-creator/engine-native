@@ -792,7 +792,10 @@ bool js_register_cc_gfx_Swapchain(se::Object* obj);
 bool register_all_gfx(se::Object* obj);
 
 JSB_REGISTER_OBJECT_TYPE(cc::gfx::Swapchain);
+SE_DECLARE_FUNC(js_gfx_Swapchain_acquire);
+SE_DECLARE_FUNC(js_gfx_Swapchain_createSurface);
 SE_DECLARE_FUNC(js_gfx_Swapchain_destroy);
+SE_DECLARE_FUNC(js_gfx_Swapchain_destroySurface);
 SE_DECLARE_FUNC(js_gfx_Swapchain_getColorTexture);
 SE_DECLARE_FUNC(js_gfx_Swapchain_getDepthStencilTexture);
 SE_DECLARE_FUNC(js_gfx_Swapchain_getHeight);
@@ -800,6 +803,7 @@ SE_DECLARE_FUNC(js_gfx_Swapchain_getVSyncMode);
 SE_DECLARE_FUNC(js_gfx_Swapchain_getWidth);
 SE_DECLARE_FUNC(js_gfx_Swapchain_getWindowHandle);
 SE_DECLARE_FUNC(js_gfx_Swapchain_initialize);
+SE_DECLARE_FUNC(js_gfx_Swapchain_present);
 SE_DECLARE_FUNC(js_gfx_Swapchain_resize);
 SE_DECLARE_FUNC(js_gfx_Swapchain_Swapchain);
 
@@ -821,7 +825,6 @@ bool js_register_cc_gfx_Device(se::Object* obj);
 bool register_all_gfx(se::Object* obj);
 
 JSB_REGISTER_OBJECT_TYPE(cc::gfx::Device);
-SE_DECLARE_FUNC(js_gfx_Device_acquire);
 SE_DECLARE_FUNC(js_gfx_Device_bindingMappingInfo);
 SE_DECLARE_FUNC(js_gfx_Device_createCommandBuffer);
 SE_DECLARE_FUNC(js_gfx_Device_createDescriptorSet);
@@ -842,7 +845,6 @@ SE_DECLARE_FUNC(js_gfx_Device_getColorFormat);
 SE_DECLARE_FUNC(js_gfx_Device_getDepthStencilFormat);
 SE_DECLARE_FUNC(js_gfx_Device_hasFeature);
 SE_DECLARE_FUNC(js_gfx_Device_initialize);
-SE_DECLARE_FUNC(js_gfx_Device_present);
 
 extern se::Object* __jsb_cc_gfx_DeviceManager_proto;
 extern se::Class* __jsb_cc_gfx_DeviceManager_class;

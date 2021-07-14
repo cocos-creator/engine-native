@@ -54,9 +54,6 @@ public:
     using Device::createTexture;
     using Device::createTextureBarrier;
 
-    void acquire() override;
-    void present() override;
-
     CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info, bool hasAgent) override;
     Queue *              createQueue() override;
     Swapchain *          createSwapchain() override;
@@ -76,15 +73,16 @@ public:
     void                 copyBuffersToTexture(const uint8_t *const *buffers, Texture *dst, const BufferTextureCopy *regions, uint count) override;
     void                 copyTextureToBuffers(Texture *src, uint8_t *const *buffers, const BufferTextureCopy *region, uint count) override;
 
-    void             flushCommands(CommandBuffer *const *cmdBuffs, uint count) override;
-    MemoryStatus &   getMemoryStatus() override { return _actor->getMemoryStatus(); }
-    uint             getNumDrawCalls() const override { return _actor->getNumDrawCalls(); }
-    uint             getNumInstances() const override { return _actor->getNumInstances(); }
-    uint             getNumTris() const override { return _actor->getNumTris(); }
+    void          flushCommands(CommandBuffer *const *cmdBuffs, uint count) override;
+    MemoryStatus &getMemoryStatus() override { return _actor->getMemoryStatus(); }
+    uint          getNumDrawCalls() const override { return _actor->getNumDrawCalls(); }
+    uint          getNumInstances() const override { return _actor->getNumInstances(); }
+    uint          getNumTris() const override { return _actor->getNumTris(); }
 
     inline void enableRecording(bool recording) { _recording = recording; }
     inline bool isRecording() const { return _recording; }
     inline uint currentFrame() const { return _currentFrame; }
+    void        frameBoundary();
 
 protected:
     static DeviceValidator *instance;
@@ -95,9 +93,6 @@ protected:
 
     bool doInit(const DeviceInfo &info) override;
     void doDestroy() override;
-
-    void releaseSurface(uintptr_t windowHandle) override { _actor->releaseSurface(windowHandle); }
-    void acquireSurface(uintptr_t windowHandle) override { _actor->acquireSurface(windowHandle); }
 
     void bindRenderContext(bool bound) override { _actor->bindRenderContext(bound); }
     void bindDeviceContext(bool bound) override { _actor->bindDeviceContext(bound); }

@@ -38,7 +38,15 @@ public:
     void initialize(const SwapchainInfo &info);
     void destroy();
 
-    virtual void resize(uint width, uint height) = 0;
+    virtual void acquire()                               = 0;
+    virtual void present()                               = 0;
+    virtual void resize(uint32_t width, uint32_t height) = 0;
+
+    virtual void destroySurface() = 0;
+    inline void  createSurface(void *windowHandle) {
+        doCreateSurface(windowHandle);
+        _windowHandle = windowHandle;
+    }
 
     inline void *    getWindowHandle() { return _windowHandle; }
     inline VsyncMode getVSyncMode() { return _vsyncMode; }
@@ -52,8 +60,9 @@ public:
     virtual SurfaceTransform getSurfaceTransform() const { return _transform; }
 
 protected:
-    virtual void doInit(const SwapchainInfo &info) = 0;
-    virtual void doDestroy()                       = 0;
+    virtual void doInit(const SwapchainInfo &info)   = 0;
+    virtual void doDestroy()                         = 0;
+    virtual void doCreateSurface(void *windowHandle) = 0;
 
     void *           _windowHandle{nullptr};
     VsyncMode        _vsyncMode{VsyncMode::RELAXED};

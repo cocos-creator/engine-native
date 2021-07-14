@@ -55,9 +55,6 @@ public:
     using Device::createTexture;
     using Device::createTextureBarrier;
 
-    void acquire() override;
-    void present() override;
-
     CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info, bool emptyhas) override;
     Queue *              createQueue() override;
     Swapchain *          createSwapchain() override;

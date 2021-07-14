@@ -38,8 +38,8 @@
 #include "QueueAgent.h"
 #include "RenderPassAgent.h"
 #include "SamplerAgent.h"
-#include "SwapchainAgent.h"
 #include "ShaderAgent.h"
+#include "SwapchainAgent.h"
 #include "TextureAgent.h"
 #include "base/threading/ThreadSafeLinearAllocator.h"
 
@@ -109,22 +109,11 @@ void DeviceAgent::doDestroy() {
     CC_SAFE_DELETE(_mainMessageQueue);
 }
 
-void DeviceAgent::acquire() {
+void DeviceAgent::frameBoundary() {
     ENQUEUE_MESSAGE_1(
-        _mainMessageQueue, DeviceAcquire,
-        actor, _actor,
-        {
-            actor->acquire();
-        });
-}
-
-void DeviceAgent::present() {
-    ENQUEUE_MESSAGE_2(
         _mainMessageQueue, DevicePresent,
-        actor, _actor,
         frameBoundarySemaphore, &_frameBoundarySemaphore,
         {
-            actor->present();
             frameBoundarySemaphore->signal();
         });
 
@@ -167,27 +156,6 @@ void DeviceAgent::setMultithreaded(bool multithreaded) {
         }
         CC_LOG_INFO("Device thread joined.");
     }
-}
-
-void DeviceAgent::releaseSurface(uintptr_t windowHandle) {
-    ENQUEUE_MESSAGE_2(
-        _mainMessageQueue, DeviceReleaseSurface,
-        actor, _actor,
-        windowHandle, windowHandle,
-        {
-            actor->releaseSurface(windowHandle);
-        });
-    _mainMessageQueue->kickAndWait();
-}
-
-void DeviceAgent::acquireSurface(uintptr_t windowHandle) {
-    ENQUEUE_MESSAGE_2(
-        _mainMessageQueue, DeviceAcquireSurface,
-        actor, _actor,
-        windowHandle, windowHandle,
-        {
-            actor->acquireSurface(windowHandle);
-        });
 }
 
 CommandBuffer *DeviceAgent::createCommandBuffer(const CommandBufferInfo &info, bool /*hasAgent*/) {

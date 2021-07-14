@@ -25,8 +25,6 @@
 
 #pragma once
 
-#include "bindings/event/CustomEventTypes.h"
-#include "bindings/event/EventDispatcher.h"
 #include "gfx-agent/DeviceAgent.h"
 #include "gfx-empty/EmptyDevice.h"
 #include "gfx-validator/DeviceValidator.h"
@@ -108,14 +106,6 @@ private:
             CC_SAFE_DELETE(device);
             return false;
         }
-
-        EventDispatcher::addCustomEventListener(EVENT_DESTROY_WINDOW, [device](const CustomEvent &e) -> void {
-            device->releaseSurface(reinterpret_cast<uintptr_t>(e.args->ptrVal));
-        });
-
-        EventDispatcher::addCustomEventListener(EVENT_RECREATE_WINDOW, [device](const CustomEvent &e) -> void {
-            device->acquireSurface(reinterpret_cast<uintptr_t>(e.args->ptrVal));
-        });
 
         *pDevice = device;
 

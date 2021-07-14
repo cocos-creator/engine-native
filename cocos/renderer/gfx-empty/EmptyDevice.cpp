@@ -78,13 +78,6 @@ void EmptyDevice::doDestroy() {
     CC_SAFE_DESTROY(_queue);
 }
 
-void EmptyDevice::acquire() {
-}
-
-void EmptyDevice::present() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(16));
-}
-
 CommandBuffer *EmptyDevice::createCommandBuffer(const CommandBufferInfo & /*info*/, bool /*hasAgent*/) {
     return CC_NEW(EmptyCommandBuffer());
 }

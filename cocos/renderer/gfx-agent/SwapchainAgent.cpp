@@ -43,8 +43,7 @@ SwapchainAgent::~SwapchainAgent() {
     CC_SAFE_DELETE(_colorTexture);
 
     ENQUEUE_MESSAGE_1(
-        DeviceAgent::getInstance()->getMessageQueue(),
-        TextureDestruct,
+        DeviceAgent::getInstance()->getMessageQueue(), SwapchainDestruct,
         actor, _actor,
         {
             CC_SAFE_DELETE(actor);
@@ -53,8 +52,7 @@ SwapchainAgent::~SwapchainAgent() {
 
 void SwapchainAgent::doInit(const SwapchainInfo &info) {
     ENQUEUE_MESSAGE_2(
-        DeviceAgent::getInstance()->getMessageQueue(),
-        TextureInit,
+        DeviceAgent::getInstance()->getMessageQueue(), SwapchainInit,
         actor, getActor(),
         info, info,
         {
@@ -72,10 +70,38 @@ void SwapchainAgent::doInit(const SwapchainInfo &info) {
     _depthStencilTexture = depthStencilTexture;
 }
 
-void SwapchainAgent::resize(uint width, uint height) {
+void SwapchainAgent::doDestroy() {
+    ENQUEUE_MESSAGE_1(
+        DeviceAgent::getInstance()->getMessageQueue(), SwapchainDestroy,
+        actor, getActor(),
+        {
+            actor->destroy();
+        });
+}
+
+void SwapchainAgent::acquire() {
+    ENQUEUE_MESSAGE_1(
+        DeviceAgent::getInstance()->getMessageQueue(), SwapchainAcquire,
+        actor, _actor,
+        {
+            actor->acquire();
+        });
+}
+
+void SwapchainAgent::present() {
+    ENQUEUE_MESSAGE_1(
+        DeviceAgent::getInstance()->getMessageQueue(), SwapchainPresent,
+        actor, _actor,
+        {
+            actor->present();
+        });
+
+    DeviceAgent::getInstance()->frameBoundary();
+}
+
+void SwapchainAgent::resize(uint32_t width, uint32_t height) {
     ENQUEUE_MESSAGE_3(
-        DeviceAgent::getInstance()->getMessageQueue(),
-        TextureResize,
+        DeviceAgent::getInstance()->getMessageQueue(), SwapchainResize,
         actor, getActor(),
         width, width,
         height, height,
@@ -84,13 +110,22 @@ void SwapchainAgent::resize(uint width, uint height) {
         });
 }
 
-void SwapchainAgent::doDestroy() {
+void SwapchainAgent::destroySurface() {
     ENQUEUE_MESSAGE_1(
-        DeviceAgent::getInstance()->getMessageQueue(),
-        TextureDestroy,
+        DeviceAgent::getInstance()->getMessageQueue(), SwapchaindestroySurface,
         actor, getActor(),
         {
-            actor->destroy();
+            actor->destroySurface();
+        });
+}
+
+void SwapchainAgent::doCreateSurface(void *windowHandle) {
+    ENQUEUE_MESSAGE_2(
+        DeviceAgent::getInstance()->getMessageQueue(), SwapchaincreateSurface,
+        actor, getActor(),
+        windowHandle, windowHandle,
+        {
+            actor->createSurface(windowHandle);
         });
 }
 
