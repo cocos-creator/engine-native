@@ -823,6 +823,7 @@ bool js_register_cc_gfx_Device(se::Object* obj);
 bool register_all_gfx(se::Object* obj);
 
 JSB_REGISTER_OBJECT_TYPE(cc::gfx::Device);
+SE_DECLARE_FUNC(js_gfx_Device_acquire);
 SE_DECLARE_FUNC(js_gfx_Device_bindingMappingInfo);
 SE_DECLARE_FUNC(js_gfx_Device_createCommandBuffer);
 SE_DECLARE_FUNC(js_gfx_Device_createDescriptorSet);
@@ -841,6 +842,7 @@ SE_DECLARE_FUNC(js_gfx_Device_destroy);
 SE_DECLARE_FUNC(js_gfx_Device_flushCommands);
 SE_DECLARE_FUNC(js_gfx_Device_hasFeature);
 SE_DECLARE_FUNC(js_gfx_Device_initialize);
+SE_DECLARE_FUNC(js_gfx_Device_present);
 
 extern se::Object* __jsb_cc_gfx_DeviceManager_proto;
 extern se::Class* __jsb_cc_gfx_DeviceManager_class;

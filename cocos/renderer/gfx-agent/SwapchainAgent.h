@@ -36,15 +36,13 @@ public:
     explicit SwapchainAgent(Swapchain *actor);
     ~SwapchainAgent() override;
 
-    void resize(uint32_t width, uint32_t height) override;
-
-    void destroySurface() override;
-
     SurfaceTransform getSurfaceTransform() const override { return _actor->getSurfaceTransform(); }
 
 protected:
     void doInit(const SwapchainInfo &info) override;
     void doDestroy() override;
+    void doResize(uint32_t width, uint32_t height) override;
+    void doDestroySurface() override;
     void doCreateSurface(void *windowHandle) override;
 };
 

@@ -32,12 +32,11 @@ namespace gfx {
 
 class CC_DLL EmptySwapchain final : public Swapchain {
 public:
-    void resize(uint width, uint height) override;
-    void destroySurface() override;
-
 protected:
     void doInit(const SwapchainInfo &info) override;
     void doDestroy() override;
+    void doResize(uint width, uint height) override;
+    void doDestroySurface() override;
     void doCreateSurface(void *windowHandle) override;
 };
 

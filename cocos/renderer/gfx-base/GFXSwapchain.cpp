@@ -39,8 +39,8 @@ Swapchain::~Swapchain() = default;
 void Swapchain::initialize(const SwapchainInfo &info) {
     CCASSERT(info.windowHandle, "Invalid window handle");
 
-    _windowHandle       = info.windowHandle;
-    _vsyncMode          = info.vsyncMode;
+    _windowHandle = info.windowHandle;
+    _vsyncMode    = info.vsyncMode;
 
     doInit(info);
 }
@@ -49,6 +49,15 @@ void Swapchain::destroy() {
     doDestroy();
 
     _windowHandle = nullptr;
+}
+
+void Swapchain::resize(uint32_t width, uint32_t height) {
+    if (width != _colorTexture->_width || height != _colorTexture->_height) {
+        doResize(width, height);
+
+        _colorTexture->_width = _depthStencilTexture->_width = width;
+        _colorTexture->_height = _depthStencilTexture->_height = height;
+    }
 }
 
 } // namespace gfx

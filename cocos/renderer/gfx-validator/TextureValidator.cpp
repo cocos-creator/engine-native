@@ -28,6 +28,7 @@
 #include "DeviceValidator.h"
 #include "TextureValidator.h"
 #include "ValidationUtils.h"
+#include "gfx-validator/SwapchainValidator.h"
 
 namespace cc {
 namespace gfx {
@@ -64,6 +65,13 @@ void TextureValidator::doInit(const TextureViewInfo &info) {
     actorInfo.texture         = static_cast<TextureValidator *>(info.texture)->getActor();
 
     _actor->initialize(actorInfo);
+}
+
+void TextureValidator::doInit(const SwapchainTextureInfo &info) {
+    SwapchainTextureInfo actorInfo = info;
+    actorInfo.swapchain = static_cast<SwapchainValidator *>(info.swapchain)->getActor();
+
+    Texture::initialize(info, _actor);
 }
 
 void TextureValidator::doDestroy() {

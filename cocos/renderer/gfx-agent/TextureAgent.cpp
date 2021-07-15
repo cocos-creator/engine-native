@@ -28,6 +28,8 @@
 
 #include "DeviceAgent.h"
 #include "TextureAgent.h"
+#include "gfx-agent/SwapchainAgent.h"
+#include "gfx-base/GFXDef.h"
 
 namespace cc {
 namespace gfx {
@@ -71,6 +73,20 @@ void TextureAgent::doInit(const TextureViewInfo &info) {
         info, actorInfo,
         {
             actor->initialize(info);
+        });
+}
+
+void TextureAgent::doInit(const SwapchainTextureInfo &info) {
+    SwapchainTextureInfo actorInfo = info;
+    actorInfo.swapchain            = static_cast<SwapchainAgent *>(info.swapchain)->getActor();
+
+    ENQUEUE_MESSAGE_2(
+        DeviceAgent::getInstance()->getMessageQueue(),
+        TextureViewInit,
+        actor, getActor(),
+        info, actorInfo,
+        {
+            Texture::initialize(info, actor);
         });
 }
 

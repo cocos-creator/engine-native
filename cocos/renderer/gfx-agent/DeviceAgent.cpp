@@ -68,18 +68,18 @@ bool DeviceAgent::doInit(const DeviceInfo &info) {
         return false;
     }
 
-    _api                                                = _actor->getGfxAPI();
-    _deviceName                                         = _actor->getDeviceName();
-    _queue                                              = CC_NEW(QueueAgent(_actor->getQueue()));
-    _cmdBuff                                            = CC_NEW(CommandBufferAgent(_actor->getCommandBuffer()));
-    static_cast<CommandBufferAgent *>(_cmdBuff)->_queue = _queue;
-    _renderer                                           = _actor->getRenderer();
-    _vendor                                             = _actor->getVendor();
-    _caps                                               = _actor->_caps;
+    _api        = _actor->getGfxAPI();
+    _deviceName = _actor->getDeviceName();
+    _queue      = CC_NEW(QueueAgent(_actor->getQueue()));
+    _cmdBuff    = CC_NEW(CommandBufferAgent(_actor->getCommandBuffer()));
+    _renderer   = _actor->getRenderer();
+    _vendor     = _actor->getVendor();
+    _caps       = _actor->_caps;
     memcpy(_features.data(), _actor->_features.data(), static_cast<uint>(Feature::COUNT) * sizeof(bool));
 
     _mainMessageQueue = CC_NEW(MessageQueue);
 
+    static_cast<CommandBufferAgent *>(_cmdBuff)->_queue = _queue;
     static_cast<CommandBufferAgent *>(_cmdBuff)->initMessageQueue();
 
     setMultithreaded(true);
@@ -260,7 +260,7 @@ void DeviceAgent::copyBuffersToTexture(const uint8_t *const *buffers, Texture *d
         bufferCount += regions[i].texSubres.layerCount;
     }
     uint totalSize = sizeof(BufferTextureCopy) * count + sizeof(uint8_t *) * bufferCount;
-    for (uint i = 0U, n = 0U; i < count; i++) {
+    for (uint i = 0U; i < count; i++) {
         const BufferTextureCopy &region = regions[i];
 
         uint size = formatSize(dst->getFormat(), region.texExtent.width, region.texExtent.height, 1);
@@ -310,6 +310,7 @@ void DeviceAgent::copyTextureToBuffers(Texture *srcTexture, uint8_t *const *buff
         {
             actor->copyTextureToBuffers(src, buffers, regions, count);
         });
+
     _mainMessageQueue->kickAndWait();
 }
 

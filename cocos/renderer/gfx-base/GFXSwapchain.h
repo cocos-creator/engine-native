@@ -26,6 +26,7 @@
 #pragma once
 
 #include "GFXTexture.h"
+#include "gfx-base/GFXDef-common.h"
 
 namespace cc {
 namespace gfx {
@@ -36,12 +37,11 @@ public:
     ~Swapchain() override;
 
     void initialize(const SwapchainInfo &info);
+    void resize(uint32_t width, uint32_t height);
     void destroy();
 
-    virtual void resize(uint32_t width, uint32_t height) = 0;
-
-    virtual void destroySurface() = 0;
-    inline void  createSurface(void *windowHandle);
+    inline void destroySurface();
+    inline void createSurface(void *windowHandle);
 
     inline void *    getWindowHandle() { return _windowHandle; }
     inline VsyncMode getVSyncMode() { return _vsyncMode; }
@@ -55,12 +55,13 @@ public:
     virtual SurfaceTransform getSurfaceTransform() const { return _transform; }
 
 protected:
-    virtual void doInit(const SwapchainInfo &info)   = 0;
-    virtual void doDestroy()                         = 0;
-    virtual void doCreateSurface(void *windowHandle) = 0;
+    virtual void doInit(const SwapchainInfo &info)         = 0;
+    virtual void doDestroy()                               = 0;
+    virtual void doResize(uint32_t width, uint32_t height) = 0;
+    virtual void doDestroySurface()                        = 0;
+    virtual void doCreateSurface(void *windowHandle)       = 0;
 
-    template <typename T>
-    void createSwapchainTextures(const SwapchainInfo &info);
+    static inline void initTexture(const SwapchainTextureInfo &info, Texture *texture);
 
     void *           _windowHandle{nullptr};
     VsyncMode        _vsyncMode{VsyncMode::RELAXED};
@@ -72,27 +73,18 @@ protected:
 
 ///////////////////////////////////////////////////////////
 
-void Swapchain::createSurface(void *windowHandle) {
-    doCreateSurface(windowHandle);
-    _windowHandle = windowHandle;
+void Swapchain::destroySurface() {
+    doDestroySurface();
+    _windowHandle = nullptr;
 }
 
-template <typename T>
-void Swapchain::createSwapchainTextures(const SwapchainInfo &info) {
-    _colorTexture          = CC_NEW(T);
-    _colorTexture->_usage  = TextureUsageBit::COLOR_ATTACHMENT;
-    _colorTexture->_format = info.colorFormat;
-    _colorTexture->_size   = formatSize(info.colorFormat, info.width, info.height, 1);
+void Swapchain::createSurface(void *windowHandle) {
+    _windowHandle = windowHandle;
+    doCreateSurface(windowHandle);
+}
 
-    _depthStencilTexture          = CC_NEW(T);
-    _depthStencilTexture->_usage  = TextureUsageBit::DEPTH_STENCIL_ATTACHMENT;
-    _depthStencilTexture->_format = info.depthStencilFormat;
-    _depthStencilTexture->_size   = formatSize(info.depthStencilFormat, info.width, info.height, 1);
-
-    _colorTexture->_width = _depthStencilTexture->_width = info.width;
-    _colorTexture->_height = _depthStencilTexture->_height = info.height;
-    _colorTexture->_samples = _depthStencilTexture->_samples = info.samples;
-    _colorTexture->_isTextureView = _depthStencilTexture->_isTextureView = true;
+void Swapchain::initTexture(const SwapchainTextureInfo &info, Texture *texture) {
+    Texture::initialize(info, texture);
 }
 
 } // namespace gfx

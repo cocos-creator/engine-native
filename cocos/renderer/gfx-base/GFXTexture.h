@@ -63,6 +63,9 @@ protected:
     virtual void doDestroy()                                  = 0;
     virtual void doResize(uint width, uint height, uint size) = 0;
 
+    static void  initialize(const SwapchainTextureInfo &info, Texture *out);
+    virtual void doInit(const SwapchainTextureInfo &info) = 0;
+
     TextureType  _type          = TextureType::TEX2D;
     TextureUsage _usage         = TextureUsageBit::NONE;
     Format       _format        = Format::UNKNOWN;

@@ -31,18 +31,30 @@ namespace cc {
 namespace gfx {
 
 void EmptySwapchain::doInit(const SwapchainInfo &info) {
-    createSwapchainTextures<EmptyTexture>(info);
+    _colorTexture = CC_NEW(EmptyTexture);
+    _depthStencilTexture = CC_NEW(EmptyTexture);
+
+    SwapchainTextureInfo textureInfo;
+    textureInfo.swapchain = this;
+    textureInfo.format    = Format::RGBA8;
+    textureInfo.width     = info.width;
+    textureInfo.height    = info.height;
+    textureInfo.samples   = info.samples;
+    initTexture(textureInfo, _colorTexture);
+
+    textureInfo.format = Format::D24S8;
+    initTexture(textureInfo, _depthStencilTexture);
 }
 
 void EmptySwapchain::doDestroy() {
-    CC_SAFE_DESTROY(_colorTexture);
     CC_SAFE_DESTROY(_depthStencilTexture);
+    CC_SAFE_DESTROY(_colorTexture);
 }
 
-void EmptySwapchain::resize(uint width, uint height) {
+void EmptySwapchain::doResize(uint width, uint height) {
 }
 
-void EmptySwapchain::destroySurface() {
+void EmptySwapchain::doDestroySurface() {
 }
 
 void EmptySwapchain::doCreateSurface(void *windowHandle) {

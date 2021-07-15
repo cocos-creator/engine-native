@@ -52,6 +52,7 @@ namespace gfx {
 
 class GFXObject;
 class Device;
+class Swapchain;
 class Buffer;
 class GlobalBarrier;
 class TextureBarrier;
@@ -764,8 +765,6 @@ struct DeviceCaps {
     uint maxUniformBlockSize            = 0U;
     uint maxTextureSize                 = 0U;
     uint maxCubeMapTextureSize          = 0U;
-    uint depthBits                      = 0U;
-    uint stencilBits                    = 0U;
     uint uboOffsetAlignment             = 1U;
 
     uint maxComputeSharedMemorySize     = 0U;
@@ -906,9 +905,6 @@ struct SwapchainInfo {
     void *      windowHandle = nullptr;
     VsyncMode   vsyncMode    = VsyncMode::RELAXED;
     SampleCount samples      = SampleCount::ONE;
-
-    Format colorFormat        = Format::UNKNOWN;
-    Format depthStencilFormat = Format::UNKNOWN;
 
     uint width  = 0U;
     uint height = 0U;

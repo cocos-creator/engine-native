@@ -65,6 +65,17 @@ void SwapchainAgent::doInit(const SwapchainInfo &info) {
     auto *depthStencilTexture = CC_NEW(TextureAgent(_actor->getDepthStencilTexture()));
     depthStencilTexture->renounceOwnership();
     _depthStencilTexture = depthStencilTexture;
+
+    SwapchainTextureInfo textureInfo;
+    textureInfo.swapchain = this;
+    textureInfo.format    = _actor->getColorTexture()->getFormat();
+    textureInfo.width     = info.width;
+    textureInfo.height    = info.height;
+    textureInfo.samples   = info.samples;
+    initTexture(textureInfo, _colorTexture);
+
+    textureInfo.format = _actor->getDepthStencilTexture()->getFormat();
+    initTexture(textureInfo, _depthStencilTexture);
 }
 
 void SwapchainAgent::doDestroy() {
@@ -79,7 +90,7 @@ void SwapchainAgent::doDestroy() {
         });
 }
 
-void SwapchainAgent::resize(uint32_t width, uint32_t height) {
+void SwapchainAgent::doResize(uint32_t width, uint32_t height) {
     ENQUEUE_MESSAGE_3(
         DeviceAgent::getInstance()->getMessageQueue(), SwapchainResize,
         actor, getActor(),
@@ -90,7 +101,7 @@ void SwapchainAgent::resize(uint32_t width, uint32_t height) {
         });
 }
 
-void SwapchainAgent::destroySurface() {
+void SwapchainAgent::doDestroySurface() {
     ENQUEUE_MESSAGE_1(
         DeviceAgent::getInstance()->getMessageQueue(), SwapchaindestroySurface,
         actor, getActor(),

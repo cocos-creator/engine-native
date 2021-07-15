@@ -27,6 +27,7 @@
 
 #include "SwapchainValidator.h"
 #include "ValidationUtils.h"
+#include "gfx-base/GFXDef.h"
 #include "gfx-validator/DeviceValidator.h"
 #include "gfx-validator/TextureValidator.h"
 
@@ -55,6 +56,17 @@ void SwapchainValidator::doInit(const SwapchainInfo &info) {
     depthStencilTexture->renounceOwnership();
     _depthStencilTexture = depthStencilTexture;
     DeviceResourceTracker<Texture>::push(_depthStencilTexture);
+
+    SwapchainTextureInfo textureInfo;
+    textureInfo.swapchain = this;
+    textureInfo.format    = _actor->getColorTexture()->getFormat();
+    textureInfo.width     = info.width;
+    textureInfo.height    = info.height;
+    textureInfo.samples   = info.samples;
+    initTexture(textureInfo, _colorTexture);
+
+    textureInfo.format = _actor->getDepthStencilTexture()->getFormat();
+    initTexture(textureInfo, _depthStencilTexture);
 }
 
 void SwapchainValidator::doDestroy() {
@@ -64,11 +76,11 @@ void SwapchainValidator::doDestroy() {
     _actor->destroy();
 }
 
-void SwapchainValidator::resize(uint32_t width, uint32_t height) {
+void SwapchainValidator::doResize(uint32_t width, uint32_t height) {
     _actor->resize(width, height);
 }
 
-void SwapchainValidator::destroySurface() {
+void SwapchainValidator::doDestroySurface() {
     _actor->destroySurface();
 }
 

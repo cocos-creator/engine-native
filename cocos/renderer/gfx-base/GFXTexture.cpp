@@ -28,6 +28,7 @@
 #include "GFXDevice.h"
 #include "GFXObject.h"
 #include "GFXTexture.h"
+#include "gfx-base/GFXDef-common.h"
 
 namespace cc {
 namespace gfx {
@@ -87,6 +88,26 @@ void Texture::initialize(const TextureViewInfo &info) {
     _size          = formatSize(_format, _width, _height, _depth);
 
     doInit(info);
+}
+
+void Texture::initialize(const SwapchainTextureInfo &info, Texture *out) {
+    out->_isTextureView = true;
+
+    out->_type          = TextureType::TEX2D;
+    out->_format        = info.format;
+    out->_baseLayer     = 0;
+    out->_layerCount    = 1;
+    out->_baseLevel     = 0;
+    out->_levelCount    = 1;
+    out->_usage         = TextureUsageBit::COLOR_ATTACHMENT;
+    out->_width         = info.width;
+    out->_height        = info.height;
+    out->_depth         = 1;
+    out->_samples       = info.samples;
+    out->_flags         = TextureFlagBit::NONE;
+    out->_size          = formatSize(out->_format, out->_width, out->_height, out->_depth);
+
+    out->doInit(info);
 }
 
 void Texture::resize(uint width, uint height) {

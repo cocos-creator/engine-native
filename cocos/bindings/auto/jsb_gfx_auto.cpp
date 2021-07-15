@@ -566,60 +566,6 @@ static bool js_gfx_DeviceCaps_set_maxCubeMapTextureSize(se::State& s) // NOLINT(
 }
 SE_BIND_PROP_SET(js_gfx_DeviceCaps_set_maxCubeMapTextureSize)
 
-static bool js_gfx_DeviceCaps_get_depthBits(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::DeviceCaps>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_DeviceCaps_get_depthBits : Invalid Native Object");
-
-    CC_UNUSED bool ok = true;
-    se::Value jsret;
-    ok &= nativevalue_to_se(cobj->depthBits, jsret, s.thisObject() /*ctx*/);
-    s.rval() = jsret;
-    SE_HOLD_RETURN_VALUE(cobj->depthBits, s.thisObject(), s.rval());
-    return true;
-}
-SE_BIND_PROP_GET(js_gfx_DeviceCaps_get_depthBits)
-
-static bool js_gfx_DeviceCaps_set_depthBits(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    const auto& args = s.args();
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::DeviceCaps>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_DeviceCaps_set_depthBits : Invalid Native Object");
-
-    CC_UNUSED bool ok = true;
-    ok &= sevalue_to_native(args[0], &cobj->depthBits, s.thisObject());
-    SE_PRECONDITION2(ok, false, "js_gfx_DeviceCaps_set_depthBits : Error processing new value");
-    return true;
-}
-SE_BIND_PROP_SET(js_gfx_DeviceCaps_set_depthBits)
-
-static bool js_gfx_DeviceCaps_get_stencilBits(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::DeviceCaps>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_DeviceCaps_get_stencilBits : Invalid Native Object");
-
-    CC_UNUSED bool ok = true;
-    se::Value jsret;
-    ok &= nativevalue_to_se(cobj->stencilBits, jsret, s.thisObject() /*ctx*/);
-    s.rval() = jsret;
-    SE_HOLD_RETURN_VALUE(cobj->stencilBits, s.thisObject(), s.rval());
-    return true;
-}
-SE_BIND_PROP_GET(js_gfx_DeviceCaps_get_stencilBits)
-
-static bool js_gfx_DeviceCaps_set_stencilBits(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    const auto& args = s.args();
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::DeviceCaps>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_DeviceCaps_set_stencilBits : Invalid Native Object");
-
-    CC_UNUSED bool ok = true;
-    ok &= sevalue_to_native(args[0], &cobj->stencilBits, s.thisObject());
-    SE_PRECONDITION2(ok, false, "js_gfx_DeviceCaps_set_stencilBits : Error processing new value");
-    return true;
-}
-SE_BIND_PROP_SET(js_gfx_DeviceCaps_set_stencilBits)
-
 static bool js_gfx_DeviceCaps_get_uboOffsetAlignment(se::State& s) // NOLINT(readability-identifier-naming)
 {
     auto* cobj = SE_THIS_OBJECT<cc::gfx::DeviceCaps>(s);
@@ -901,14 +847,6 @@ bool sevalue_to_native(const se::Value &from, cc::gfx::DeviceCaps * to, se::Obje
     if(!field.isNullOrUndefined()) {
         ok &= sevalue_to_native(field, &(to->maxCubeMapTextureSize), ctx);
     }
-    json->getProperty("depthBits", &field);
-    if(!field.isNullOrUndefined()) {
-        ok &= sevalue_to_native(field, &(to->depthBits), ctx);
-    }
-    json->getProperty("stencilBits", &field);
-    if(!field.isNullOrUndefined()) {
-        ok &= sevalue_to_native(field, &(to->stencilBits), ctx);
-    }
     json->getProperty("uboOffsetAlignment", &field);
     if(!field.isNullOrUndefined()) {
         ok &= sevalue_to_native(field, &(to->uboOffsetAlignment), ctx);
@@ -1019,34 +957,28 @@ static bool js_gfx_DeviceCaps_constructor(se::State& s) // NOLINT(readability-id
         ok &= sevalue_to_native(args[12], &(cobj->maxCubeMapTextureSize), nullptr);
     }
     if (argc > 13 && !args[13].isUndefined()) {
-        ok &= sevalue_to_native(args[13], &(cobj->depthBits), nullptr);
+        ok &= sevalue_to_native(args[13], &(cobj->uboOffsetAlignment), nullptr);
     }
     if (argc > 14 && !args[14].isUndefined()) {
-        ok &= sevalue_to_native(args[14], &(cobj->stencilBits), nullptr);
+        ok &= sevalue_to_native(args[14], &(cobj->maxComputeSharedMemorySize), nullptr);
     }
     if (argc > 15 && !args[15].isUndefined()) {
-        ok &= sevalue_to_native(args[15], &(cobj->uboOffsetAlignment), nullptr);
+        ok &= sevalue_to_native(args[15], &(cobj->maxComputeWorkGroupInvocations), nullptr);
     }
     if (argc > 16 && !args[16].isUndefined()) {
-        ok &= sevalue_to_native(args[16], &(cobj->maxComputeSharedMemorySize), nullptr);
+        ok &= sevalue_to_native(args[16], &(cobj->maxComputeWorkGroupSize), nullptr);
     }
     if (argc > 17 && !args[17].isUndefined()) {
-        ok &= sevalue_to_native(args[17], &(cobj->maxComputeWorkGroupInvocations), nullptr);
+        ok &= sevalue_to_native(args[17], &(cobj->maxComputeWorkGroupCount), nullptr);
     }
     if (argc > 18 && !args[18].isUndefined()) {
-        ok &= sevalue_to_native(args[18], &(cobj->maxComputeWorkGroupSize), nullptr);
+        ok &= sevalue_to_native(args[18], &(cobj->clipSpaceMinZ), nullptr);
     }
     if (argc > 19 && !args[19].isUndefined()) {
-        ok &= sevalue_to_native(args[19], &(cobj->maxComputeWorkGroupCount), nullptr);
+        ok &= sevalue_to_native(args[19], &(cobj->screenSpaceSignY), nullptr);
     }
     if (argc > 20 && !args[20].isUndefined()) {
-        ok &= sevalue_to_native(args[20], &(cobj->clipSpaceMinZ), nullptr);
-    }
-    if (argc > 21 && !args[21].isUndefined()) {
-        ok &= sevalue_to_native(args[21], &(cobj->screenSpaceSignY), nullptr);
-    }
-    if (argc > 22 && !args[22].isUndefined()) {
-        ok &= sevalue_to_native(args[22], &(cobj->clipSpaceSignY), nullptr);
+        ok &= sevalue_to_native(args[20], &(cobj->clipSpaceSignY), nullptr);
     }
 
     if(!ok) {
@@ -1093,8 +1025,6 @@ bool js_register_gfx_DeviceCaps(se::Object* obj) // NOLINT(readability-identifie
     cls->defineProperty("maxUniformBlockSize", _SE(js_gfx_DeviceCaps_get_maxUniformBlockSize), _SE(js_gfx_DeviceCaps_set_maxUniformBlockSize));
     cls->defineProperty("maxTextureSize", _SE(js_gfx_DeviceCaps_get_maxTextureSize), _SE(js_gfx_DeviceCaps_set_maxTextureSize));
     cls->defineProperty("maxCubeMapTextureSize", _SE(js_gfx_DeviceCaps_get_maxCubeMapTextureSize), _SE(js_gfx_DeviceCaps_set_maxCubeMapTextureSize));
-    cls->defineProperty("depthBits", _SE(js_gfx_DeviceCaps_get_depthBits), _SE(js_gfx_DeviceCaps_set_depthBits));
-    cls->defineProperty("stencilBits", _SE(js_gfx_DeviceCaps_get_stencilBits), _SE(js_gfx_DeviceCaps_set_stencilBits));
     cls->defineProperty("uboOffsetAlignment", _SE(js_gfx_DeviceCaps_get_uboOffsetAlignment), _SE(js_gfx_DeviceCaps_set_uboOffsetAlignment));
     cls->defineProperty("maxComputeSharedMemorySize", _SE(js_gfx_DeviceCaps_get_maxComputeSharedMemorySize), _SE(js_gfx_DeviceCaps_set_maxComputeSharedMemorySize));
     cls->defineProperty("maxComputeWorkGroupInvocations", _SE(js_gfx_DeviceCaps_get_maxComputeWorkGroupInvocations), _SE(js_gfx_DeviceCaps_set_maxComputeWorkGroupInvocations));
@@ -3863,60 +3793,6 @@ static bool js_gfx_SwapchainInfo_set_samples(se::State& s) // NOLINT(readability
 }
 SE_BIND_PROP_SET(js_gfx_SwapchainInfo_set_samples)
 
-static bool js_gfx_SwapchainInfo_get_colorFormat(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::SwapchainInfo>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_SwapchainInfo_get_colorFormat : Invalid Native Object");
-
-    CC_UNUSED bool ok = true;
-    se::Value jsret;
-    ok &= nativevalue_to_se(cobj->colorFormat, jsret, s.thisObject() /*ctx*/);
-    s.rval() = jsret;
-    SE_HOLD_RETURN_VALUE(cobj->colorFormat, s.thisObject(), s.rval());
-    return true;
-}
-SE_BIND_PROP_GET(js_gfx_SwapchainInfo_get_colorFormat)
-
-static bool js_gfx_SwapchainInfo_set_colorFormat(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    const auto& args = s.args();
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::SwapchainInfo>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_SwapchainInfo_set_colorFormat : Invalid Native Object");
-
-    CC_UNUSED bool ok = true;
-    ok &= sevalue_to_native(args[0], &cobj->colorFormat, s.thisObject());
-    SE_PRECONDITION2(ok, false, "js_gfx_SwapchainInfo_set_colorFormat : Error processing new value");
-    return true;
-}
-SE_BIND_PROP_SET(js_gfx_SwapchainInfo_set_colorFormat)
-
-static bool js_gfx_SwapchainInfo_get_depthStencilFormat(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::SwapchainInfo>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_SwapchainInfo_get_depthStencilFormat : Invalid Native Object");
-
-    CC_UNUSED bool ok = true;
-    se::Value jsret;
-    ok &= nativevalue_to_se(cobj->depthStencilFormat, jsret, s.thisObject() /*ctx*/);
-    s.rval() = jsret;
-    SE_HOLD_RETURN_VALUE(cobj->depthStencilFormat, s.thisObject(), s.rval());
-    return true;
-}
-SE_BIND_PROP_GET(js_gfx_SwapchainInfo_get_depthStencilFormat)
-
-static bool js_gfx_SwapchainInfo_set_depthStencilFormat(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    const auto& args = s.args();
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::SwapchainInfo>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_SwapchainInfo_set_depthStencilFormat : Invalid Native Object");
-
-    CC_UNUSED bool ok = true;
-    ok &= sevalue_to_native(args[0], &cobj->depthStencilFormat, s.thisObject());
-    SE_PRECONDITION2(ok, false, "js_gfx_SwapchainInfo_set_depthStencilFormat : Error processing new value");
-    return true;
-}
-SE_BIND_PROP_SET(js_gfx_SwapchainInfo_set_depthStencilFormat)
-
 static bool js_gfx_SwapchainInfo_get_width(se::State& s) // NOLINT(readability-identifier-naming)
 {
     auto* cobj = SE_THIS_OBJECT<cc::gfx::SwapchainInfo>(s);
@@ -3996,14 +3872,6 @@ bool sevalue_to_native(const se::Value &from, cc::gfx::SwapchainInfo * to, se::O
     if(!field.isNullOrUndefined()) {
         ok &= sevalue_to_native(field, &(to->samples), ctx);
     }
-    json->getProperty("colorFormat", &field);
-    if(!field.isNullOrUndefined()) {
-        ok &= sevalue_to_native(field, &(to->colorFormat), ctx);
-    }
-    json->getProperty("depthStencilFormat", &field);
-    if(!field.isNullOrUndefined()) {
-        ok &= sevalue_to_native(field, &(to->depthStencilFormat), ctx);
-    }
     json->getProperty("width", &field);
     if(!field.isNullOrUndefined()) {
         ok &= sevalue_to_native(field, &(to->width), ctx);
@@ -4060,16 +3928,10 @@ static bool js_gfx_SwapchainInfo_constructor(se::State& s) // NOLINT(readability
         ok &= sevalue_to_native(args[2], &(cobj->samples), nullptr);
     }
     if (argc > 3 && !args[3].isUndefined()) {
-        ok &= sevalue_to_native(args[3], &(cobj->colorFormat), nullptr);
+        ok &= sevalue_to_native(args[3], &(cobj->width), nullptr);
     }
     if (argc > 4 && !args[4].isUndefined()) {
-        ok &= sevalue_to_native(args[4], &(cobj->depthStencilFormat), nullptr);
-    }
-    if (argc > 5 && !args[5].isUndefined()) {
-        ok &= sevalue_to_native(args[5], &(cobj->width), nullptr);
-    }
-    if (argc > 6 && !args[6].isUndefined()) {
-        ok &= sevalue_to_native(args[6], &(cobj->height), nullptr);
+        ok &= sevalue_to_native(args[4], &(cobj->height), nullptr);
     }
 
     if(!ok) {
@@ -4106,8 +3968,6 @@ bool js_register_gfx_SwapchainInfo(se::Object* obj) // NOLINT(readability-identi
     cls->defineProperty("windowHandle", _SE(js_gfx_SwapchainInfo_get_windowHandle), _SE(js_gfx_SwapchainInfo_set_windowHandle));
     cls->defineProperty("vsyncMode", _SE(js_gfx_SwapchainInfo_get_vsyncMode), _SE(js_gfx_SwapchainInfo_set_vsyncMode));
     cls->defineProperty("samples", _SE(js_gfx_SwapchainInfo_get_samples), _SE(js_gfx_SwapchainInfo_set_samples));
-    cls->defineProperty("colorFormat", _SE(js_gfx_SwapchainInfo_get_colorFormat), _SE(js_gfx_SwapchainInfo_set_colorFormat));
-    cls->defineProperty("depthStencilFormat", _SE(js_gfx_SwapchainInfo_get_depthStencilFormat), _SE(js_gfx_SwapchainInfo_set_depthStencilFormat));
     cls->defineProperty("width", _SE(js_gfx_SwapchainInfo_get_width), _SE(js_gfx_SwapchainInfo_set_width));
     cls->defineProperty("height", _SE(js_gfx_SwapchainInfo_get_height), _SE(js_gfx_SwapchainInfo_set_height));
     cls->defineFinalizeFunction(_SE(js_cc_gfx_SwapchainInfo_finalize));
@@ -20088,6 +19948,43 @@ bool js_register_gfx_TextureBarrier(se::Object* obj) // NOLINT(readability-ident
 se::Object* __jsb_cc_gfx_Device_proto = nullptr;
 se::Class* __jsb_cc_gfx_Device_class = nullptr;
 
+static bool js_gfx_Device_acquire(se::State& s) // NOLINT(readability-identifier-naming)
+{
+    CC_UNUSED bool ok = true;
+    auto* cobj = SE_THIS_OBJECT<cc::gfx::Device>(s);
+    SE_PRECONDITION2( cobj, false, "js_gfx_Device_acquire : Invalid Native Object");
+    const auto& args = s.args();
+    size_t argc = args.size();
+    do {
+        if (argc == 1) {
+            HolderType<std::vector<cc::gfx::Swapchain *>, true> arg0 = {};
+
+            ok &= sevalue_to_native(args[0], &arg0, s.thisObject());
+            if (!ok) { ok = true; break; }
+            cobj->acquire(arg0.value());
+            return true;
+        }
+    } while(false);
+
+    do {
+        if (argc == 2) {
+            HolderType<cc::gfx::Swapchain**, false> arg0 = {};
+            HolderType<unsigned int, false> arg1 = {};
+
+            ok &= sevalue_to_native(args[0], &arg0, s.thisObject());
+            if (!ok) { ok = true; break; }
+            ok &= sevalue_to_native(args[1], &arg1, s.thisObject());
+            if (!ok) { ok = true; break; }
+            cobj->acquire(arg0.value(), arg1.value());
+            return true;
+        }
+    } while(false);
+
+    SE_REPORT_ERROR("wrong number of arguments: %d", (int)argc);
+    return false;
+}
+SE_BIND_FUNC(js_gfx_Device_acquire)
+
 static bool js_gfx_Device_bindingMappingInfo(se::State& s) // NOLINT(readability-identifier-naming)
 {
     auto* cobj = SE_THIS_OBJECT<cc::gfx::Device>(s);
@@ -20477,25 +20374,6 @@ static bool js_gfx_Device_getCapabilities(se::State& s) // NOLINT(readability-id
 }
 SE_BIND_PROP_GET(js_gfx_Device_getCapabilities)
 
-static bool js_gfx_Device_getColorFormat(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::Device>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_Device_getColorFormat : Invalid Native Object");
-    const auto& args = s.args();
-    size_t argc = args.size();
-    CC_UNUSED bool ok = true;
-    if (argc == 0) {
-        auto result = static_cast<int>(cobj->getColorFormat());
-        ok &= nativevalue_to_se(result, s.rval(), nullptr /*ctx*/);
-        SE_PRECONDITION2(ok, false, "js_gfx_Device_getColorFormat : Error processing arguments");
-        SE_HOLD_RETURN_VALUE(result, s.thisObject(), s.rval());
-        return true;
-    }
-    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
-    return false;
-}
-SE_BIND_PROP_GET(js_gfx_Device_getColorFormat)
-
 static bool js_gfx_Device_getCommandBuffer(se::State& s) // NOLINT(readability-identifier-naming)
 {
     auto* cobj = SE_THIS_OBJECT<cc::gfx::Device>(s);
@@ -20514,25 +20392,6 @@ static bool js_gfx_Device_getCommandBuffer(se::State& s) // NOLINT(readability-i
     return false;
 }
 SE_BIND_PROP_GET(js_gfx_Device_getCommandBuffer)
-
-static bool js_gfx_Device_getDepthStencilFormat(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::Device>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_Device_getDepthStencilFormat : Invalid Native Object");
-    const auto& args = s.args();
-    size_t argc = args.size();
-    CC_UNUSED bool ok = true;
-    if (argc == 0) {
-        auto result = static_cast<int>(cobj->getDepthStencilFormat());
-        ok &= nativevalue_to_se(result, s.rval(), nullptr /*ctx*/);
-        SE_PRECONDITION2(ok, false, "js_gfx_Device_getDepthStencilFormat : Error processing arguments");
-        SE_HOLD_RETURN_VALUE(result, s.thisObject(), s.rval());
-        return true;
-    }
-    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
-    return false;
-}
-SE_BIND_PROP_GET(js_gfx_Device_getDepthStencilFormat)
 
 static bool js_gfx_Device_getDeviceName(se::State& s) // NOLINT(readability-identifier-naming)
 {
@@ -20749,6 +20608,21 @@ static bool js_gfx_Device_initialize(se::State& s) // NOLINT(readability-identif
 }
 SE_BIND_FUNC(js_gfx_Device_initialize)
 
+static bool js_gfx_Device_present(se::State& s) // NOLINT(readability-identifier-naming)
+{
+    auto* cobj = SE_THIS_OBJECT<cc::gfx::Device>(s);
+    SE_PRECONDITION2(cobj, false, "js_gfx_Device_present : Invalid Native Object");
+    const auto& args = s.args();
+    size_t argc = args.size();
+    if (argc == 0) {
+        cobj->present();
+        return true;
+    }
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
+    return false;
+}
+SE_BIND_FUNC(js_gfx_Device_present)
+
 
 
 bool js_register_gfx_Device(se::Object* obj) // NOLINT(readability-identifier-naming)
@@ -20765,9 +20639,8 @@ bool js_register_gfx_Device(se::Object* obj) // NOLINT(readability-identifier-na
     cls->defineProperty("numDrawCalls", _SE(js_gfx_Device_getNumDrawCalls), nullptr);
     cls->defineProperty("numInstances", _SE(js_gfx_Device_getNumInstances), nullptr);
     cls->defineProperty("numTris", _SE(js_gfx_Device_getNumTris), nullptr);
-    cls->defineProperty("colorFormat", _SE(js_gfx_Device_getColorFormat), nullptr);
-    cls->defineProperty("depthStencilFormat", _SE(js_gfx_Device_getDepthStencilFormat), nullptr);
     cls->defineProperty("capabilities", _SE(js_gfx_Device_getCapabilities), nullptr);
+    cls->defineFunction("acquire", _SE(js_gfx_Device_acquire));
     cls->defineFunction("bindingMappingInfo", _SE(js_gfx_Device_bindingMappingInfo));
     cls->defineFunction("createCommandBuffer", _SE(js_gfx_Device_createCommandBuffer));
     cls->defineFunction("createDescriptorSet", _SE(js_gfx_Device_createDescriptorSet));
@@ -20786,6 +20659,7 @@ bool js_register_gfx_Device(se::Object* obj) // NOLINT(readability-identifier-na
     cls->defineFunction("flushCommands", _SE(js_gfx_Device_flushCommands));
     cls->defineFunction("hasFeature", _SE(js_gfx_Device_hasFeature));
     cls->defineFunction("initialize", _SE(js_gfx_Device_initialize));
+    cls->defineFunction("present", _SE(js_gfx_Device_present));
     cls->install();
     JSBClassType::registerClass<cc::gfx::Device>(cls);
 

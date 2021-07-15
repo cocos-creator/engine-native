@@ -66,18 +66,17 @@ bool DeviceValidator::doInit(const DeviceInfo &info) {
         return false;
     }
 
-    _api                     = _actor->getGfxAPI();
-    _deviceName              = _actor->getDeviceName();
-    _queue                   = CC_NEW(QueueValidator(_actor->getQueue()));
-    auto *cmdBuffValidator   = CC_NEW(CommandBufferValidator(_actor->getCommandBuffer()));
-    _cmdBuff                 = cmdBuffValidator;
-    cmdBuffValidator->_queue = _queue;
-    _renderer                = _actor->getRenderer();
-    _vendor                  = _actor->getVendor();
-    _caps                    = _actor->_caps;
-
+    _api        = _actor->getGfxAPI();
+    _deviceName = _actor->getDeviceName();
+    _queue      = CC_NEW(QueueValidator(_actor->getQueue()));
+    _cmdBuff    = CC_NEW(CommandBufferValidator(_actor->getCommandBuffer()));
+    _renderer   = _actor->getRenderer();
+    _vendor     = _actor->getVendor();
+    _caps       = _actor->_caps;
     memcpy(_features.data(), _actor->_features.data(), static_cast<uint>(Feature::COUNT) * sizeof(bool));
-    cmdBuffValidator->initValidator();
+
+    static_cast<CommandBufferValidator *>(_cmdBuff)->_queue = _queue;
+    static_cast<CommandBufferValidator *>(_cmdBuff)->initValidator();
 
     DeviceResourceTracker<CommandBuffer>::push(_cmdBuff);
     DeviceResourceTracker<Queue>::push(_queue);

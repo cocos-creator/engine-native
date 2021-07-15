@@ -101,8 +101,6 @@ public:
     inline const String &    getVendor() const { return _vendor; }
     inline bool              hasFeature(Feature feature) const { return _features[static_cast<uint>(feature)]; }
 
-    inline Format                    getColorFormat() const { return _colorFormat; }
-    inline Format                    getDepthStencilFormat() const { return _depthStencilFormat; }
     inline const BindingMappingInfo &bindingMappingInfo() const { return _bindingMappingInfo; }
 
 protected:
@@ -143,8 +141,6 @@ protected:
     String             _version;
     API                _api{API::UNKNOWN};
     bool               _multithreadedSubmission{true};
-    Format             _colorFormat{Format::UNKNOWN};
-    Format             _depthStencilFormat{Format::UNKNOWN};
     DeviceCaps         _caps;
     BindingMappingInfo _bindingMappingInfo;
 
