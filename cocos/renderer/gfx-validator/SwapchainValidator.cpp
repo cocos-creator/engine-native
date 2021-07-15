@@ -64,16 +64,6 @@ void SwapchainValidator::doDestroy() {
     _actor->destroy();
 }
 
-void SwapchainValidator::acquire() {
-    _actor->acquire();
-}
-
-void SwapchainValidator::present() {
-    _actor->present();
-
-    DeviceValidator::getInstance()->frameBoundary();
-}
-
 void SwapchainValidator::resize(uint32_t width, uint32_t height) {
     _actor->resize(width, height);
 }

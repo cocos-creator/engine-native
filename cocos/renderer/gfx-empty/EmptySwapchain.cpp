@@ -42,13 +42,6 @@ void EmptySwapchain::doDestroy() {
 void EmptySwapchain::resize(uint width, uint height) {
 }
 
-void EmptySwapchain::acquire() {
-}
-
-void EmptySwapchain::present() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(16));
-}
-
 void EmptySwapchain::destroySurface() {
 }
 

@@ -19728,21 +19728,6 @@ bool js_register_gfx_Texture(se::Object* obj) // NOLINT(readability-identifier-n
 se::Object* __jsb_cc_gfx_Swapchain_proto = nullptr;
 se::Class* __jsb_cc_gfx_Swapchain_class = nullptr;
 
-static bool js_gfx_Swapchain_acquire(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::Swapchain>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_Swapchain_acquire : Invalid Native Object");
-    const auto& args = s.args();
-    size_t argc = args.size();
-    if (argc == 0) {
-        cobj->acquire();
-        return true;
-    }
-    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
-    return false;
-}
-SE_BIND_FUNC(js_gfx_Swapchain_acquire)
-
 static bool js_gfx_Swapchain_createSurface(se::State& s) // NOLINT(readability-identifier-naming)
 {
     auto* cobj = SE_THIS_OBJECT<cc::gfx::Swapchain>(s);
@@ -19944,21 +19929,6 @@ static bool js_gfx_Swapchain_initialize(se::State& s) // NOLINT(readability-iden
 }
 SE_BIND_FUNC(js_gfx_Swapchain_initialize)
 
-static bool js_gfx_Swapchain_present(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    auto* cobj = SE_THIS_OBJECT<cc::gfx::Swapchain>(s);
-    SE_PRECONDITION2(cobj, false, "js_gfx_Swapchain_present : Invalid Native Object");
-    const auto& args = s.args();
-    size_t argc = args.size();
-    if (argc == 0) {
-        cobj->present();
-        return true;
-    }
-    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
-    return false;
-}
-SE_BIND_FUNC(js_gfx_Swapchain_present)
-
 static bool js_gfx_Swapchain_resize(se::State& s) // NOLINT(readability-identifier-naming)
 {
     auto* cobj = SE_THIS_OBJECT<cc::gfx::Swapchain>(s);
@@ -20010,7 +19980,6 @@ bool js_register_gfx_Swapchain(se::Object* obj) // NOLINT(readability-identifier
     auto* cls = se::Class::create("Swapchain", obj, __jsb_cc_gfx_GFXObject_proto, _SE(js_gfx_Swapchain_constructor));
 
     cls->defineProperty("surfaceTransform", _SE(js_gfx_Swapchain_getSurfaceTransform), nullptr);
-    cls->defineFunction("acquire", _SE(js_gfx_Swapchain_acquire));
     cls->defineFunction("createSurface", _SE(js_gfx_Swapchain_createSurface));
     cls->defineFunction("destroy", _SE(js_gfx_Swapchain_destroy));
     cls->defineFunction("destroySurface", _SE(js_gfx_Swapchain_destroySurface));
@@ -20021,7 +19990,6 @@ bool js_register_gfx_Swapchain(se::Object* obj) // NOLINT(readability-identifier
     cls->defineFunction("getWidth", _SE(js_gfx_Swapchain_getWidth));
     cls->defineFunction("getWindowHandle", _SE(js_gfx_Swapchain_getWindowHandle));
     cls->defineFunction("initialize", _SE(js_gfx_Swapchain_initialize));
-    cls->defineFunction("present", _SE(js_gfx_Swapchain_present));
     cls->defineFunction("resize", _SE(js_gfx_Swapchain_resize));
     cls->defineFinalizeFunction(_SE(js_cc_gfx_Swapchain_finalize));
     cls->install();
@@ -20526,7 +20494,7 @@ static bool js_gfx_Device_getColorFormat(se::State& s) // NOLINT(readability-ide
     SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
     return false;
 }
-SE_BIND_FUNC(js_gfx_Device_getColorFormat)
+SE_BIND_PROP_GET(js_gfx_Device_getColorFormat)
 
 static bool js_gfx_Device_getCommandBuffer(se::State& s) // NOLINT(readability-identifier-naming)
 {
@@ -20564,7 +20532,7 @@ static bool js_gfx_Device_getDepthStencilFormat(se::State& s) // NOLINT(readabil
     SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
     return false;
 }
-SE_BIND_FUNC(js_gfx_Device_getDepthStencilFormat)
+SE_BIND_PROP_GET(js_gfx_Device_getDepthStencilFormat)
 
 static bool js_gfx_Device_getDeviceName(se::State& s) // NOLINT(readability-identifier-naming)
 {
@@ -20797,6 +20765,8 @@ bool js_register_gfx_Device(se::Object* obj) // NOLINT(readability-identifier-na
     cls->defineProperty("numDrawCalls", _SE(js_gfx_Device_getNumDrawCalls), nullptr);
     cls->defineProperty("numInstances", _SE(js_gfx_Device_getNumInstances), nullptr);
     cls->defineProperty("numTris", _SE(js_gfx_Device_getNumTris), nullptr);
+    cls->defineProperty("colorFormat", _SE(js_gfx_Device_getColorFormat), nullptr);
+    cls->defineProperty("depthStencilFormat", _SE(js_gfx_Device_getDepthStencilFormat), nullptr);
     cls->defineProperty("capabilities", _SE(js_gfx_Device_getCapabilities), nullptr);
     cls->defineFunction("bindingMappingInfo", _SE(js_gfx_Device_bindingMappingInfo));
     cls->defineFunction("createCommandBuffer", _SE(js_gfx_Device_createCommandBuffer));
@@ -20814,8 +20784,6 @@ bool js_register_gfx_Device(se::Object* obj) // NOLINT(readability-identifier-na
     cls->defineFunction("createSwapchain", _SE(js_gfx_Device_createSwapchain));
     cls->defineFunction("destroy", _SE(js_gfx_Device_destroy));
     cls->defineFunction("flushCommands", _SE(js_gfx_Device_flushCommands));
-    cls->defineFunction("getColorFormat", _SE(js_gfx_Device_getColorFormat));
-    cls->defineFunction("getDepthStencilFormat", _SE(js_gfx_Device_getDepthStencilFormat));
     cls->defineFunction("hasFeature", _SE(js_gfx_Device_hasFeature));
     cls->defineFunction("initialize", _SE(js_gfx_Device_initialize));
     cls->install();

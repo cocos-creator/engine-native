@@ -42,6 +42,8 @@
 #include "SwapchainAgent.h"
 #include "TextureAgent.h"
 #include "base/threading/ThreadSafeLinearAllocator.h"
+#include "gfx-base/GFXDef-common.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
@@ -109,11 +111,27 @@ void DeviceAgent::doDestroy() {
     CC_SAFE_DELETE(_mainMessageQueue);
 }
 
-void DeviceAgent::frameBoundary() {
-    ENQUEUE_MESSAGE_1(
+void DeviceAgent::acquire(Swapchain *const *swapchains, uint32_t count) {
+    auto *actorSwapchains = _mainMessageQueue->allocate<Swapchain *>(count);
+    memcpy(actorSwapchains, swapchains, count * sizeof(void *));
+
+    ENQUEUE_MESSAGE_3(
         _mainMessageQueue, DevicePresent,
+        actor, _actor,
+        swapchains, actorSwapchains,
+        count, count,
+        {
+            actor->acquire(swapchains, count);
+        });
+}
+
+void DeviceAgent::present() {
+    ENQUEUE_MESSAGE_2(
+        _mainMessageQueue, DevicePresent,
+        actor, _actor,
         frameBoundarySemaphore, &_frameBoundarySemaphore,
         {
+            actor->present();
             frameBoundarySemaphore->signal();
         });
 

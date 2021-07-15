@@ -117,7 +117,13 @@ void DeviceValidator::doDestroy() {
     _actor->destroy();
 }
 
-void DeviceValidator::frameBoundary() {
+void DeviceValidator::acquire(Swapchain *const *swapchains, uint32_t count) {
+    _actor->acquire(swapchains, count);
+}
+
+void DeviceValidator::present() {
+    _actor->present();
+
     ++_currentFrame;
 }
 

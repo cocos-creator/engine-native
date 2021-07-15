@@ -36,8 +36,6 @@ public:
     explicit SwapchainAgent(Swapchain *actor);
     ~SwapchainAgent() override;
 
-    void acquire() override;
-    void present() override;
     void resize(uint32_t width, uint32_t height) override;
 
     void destroySurface() override;

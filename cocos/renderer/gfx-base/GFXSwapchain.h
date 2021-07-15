@@ -38,8 +38,6 @@ public:
     void initialize(const SwapchainInfo &info);
     void destroy();
 
-    virtual void acquire()                               = 0;
-    virtual void present()                               = 0;
     virtual void resize(uint32_t width, uint32_t height) = 0;
 
     virtual void destroySurface() = 0;

@@ -54,6 +54,9 @@ public:
     using Device::createTexture;
     using Device::createTextureBarrier;
 
+    void acquire(Swapchain *const *swapchains, uint32_t count) override;
+    void present() override;
+
     CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info, bool hasAgent) override;
     Queue *              createQueue() override;
     Swapchain *          createSwapchain() override;
@@ -82,7 +85,6 @@ public:
     inline void enableRecording(bool recording) { _recording = recording; }
     inline bool isRecording() const { return _recording; }
     inline uint currentFrame() const { return _currentFrame; }
-    void        frameBoundary();
 
 protected:
     static DeviceValidator *instance;

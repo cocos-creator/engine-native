@@ -56,12 +56,15 @@ public:
     bool initialize(const DeviceInfo &info);
     void destroy();
 
+    virtual void acquire(Swapchain *const *swapchains, uint32_t count) = 0;
+    virtual void present()                                             = 0;
+
     virtual void flushCommands(CommandBuffer *const *cmdBuffs, uint count) {}
 
-    virtual MemoryStatus &   getMemoryStatus() { return _memoryStatus; }
-    virtual uint             getNumDrawCalls() const { return _numDrawCalls; }
-    virtual uint             getNumInstances() const { return _numInstances; }
-    virtual uint             getNumTris() const { return _numTriangles; }
+    virtual MemoryStatus &getMemoryStatus() { return _memoryStatus; }
+    virtual uint          getNumDrawCalls() const { return _numDrawCalls; }
+    virtual uint          getNumInstances() const { return _numInstances; }
+    virtual uint          getNumTris() const { return _numTriangles; }
 
     inline CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info);
     inline Queue *              createQueue(const QueueInfo &info);
@@ -83,10 +86,11 @@ public:
     inline TextureBarrier *     createTextureBarrier(const TextureBarrierInfo &info);
 
     virtual void copyBuffersToTexture(const uint8_t *const *buffers, Texture *dst, const BufferTextureCopy *regions, uint count) = 0;
-    virtual void copyTextureToBuffers(Texture *src, uint8_t *const *buffers, const BufferTextureCopy *region, uint count) = 0;
+    virtual void copyTextureToBuffers(Texture *src, uint8_t *const *buffers, const BufferTextureCopy *region, uint count)        = 0;
 
     inline void copyBuffersToTexture(const BufferDataList &buffers, Texture *dst, const BufferTextureCopyList &regions);
     inline void flushCommands(const vector<CommandBuffer *> &cmdBuffs);
+    inline void acquire(const vector<Swapchain *> &swapchains);
 
     inline Queue *           getQueue() const { return _queue; }
     inline CommandBuffer *   getCommandBuffer() const { return _cmdBuff; }
@@ -149,10 +153,10 @@ protected:
     Queue *        _queue{nullptr};
     CommandBuffer *_cmdBuff{nullptr};
 
-    uint             _numDrawCalls{0U};
-    uint             _numInstances{0U};
-    uint             _numTriangles{0U};
-    MemoryStatus     _memoryStatus;
+    uint         _numDrawCalls{0U};
+    uint         _numInstances{0U};
+    uint         _numTriangles{0U};
+    MemoryStatus _memoryStatus;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -271,6 +275,10 @@ void Device::copyBuffersToTexture(const BufferDataList &buffers, Texture *dst, c
 
 void Device::flushCommands(const vector<CommandBuffer *> &cmdBuffs) {
     flushCommands(cmdBuffs.data(), utils::toUint(cmdBuffs.size()));
+}
+
+void Device::acquire(const vector<Swapchain *> &swapchains) {
+    acquire(swapchains.data(), utils::toUint(swapchains.size()));
 }
 
 } // namespace gfx

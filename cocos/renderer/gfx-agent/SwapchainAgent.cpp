@@ -79,26 +79,6 @@ void SwapchainAgent::doDestroy() {
         });
 }
 
-void SwapchainAgent::acquire() {
-    ENQUEUE_MESSAGE_1(
-        DeviceAgent::getInstance()->getMessageQueue(), SwapchainAcquire,
-        actor, _actor,
-        {
-            actor->acquire();
-        });
-}
-
-void SwapchainAgent::present() {
-    ENQUEUE_MESSAGE_1(
-        DeviceAgent::getInstance()->getMessageQueue(), SwapchainPresent,
-        actor, _actor,
-        {
-            actor->present();
-        });
-
-    DeviceAgent::getInstance()->frameBoundary();
-}
-
 void SwapchainAgent::resize(uint32_t width, uint32_t height) {
     ENQUEUE_MESSAGE_3(
         DeviceAgent::getInstance()->getMessageQueue(), SwapchainResize,

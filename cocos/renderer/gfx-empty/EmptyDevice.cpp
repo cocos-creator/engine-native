@@ -78,6 +78,13 @@ void EmptyDevice::doDestroy() {
     CC_SAFE_DESTROY(_queue);
 }
 
+void EmptyDevice::acquire(Swapchain *const *swapchains, uint32_t count) {
+}
+
+void EmptyDevice::present() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+}
+
 CommandBuffer *EmptyDevice::createCommandBuffer(const CommandBufferInfo & /*info*/, bool /*hasAgent*/) {
     return CC_NEW(EmptyCommandBuffer());
 }
