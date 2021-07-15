@@ -55,7 +55,7 @@ const char *FrameGraph::handleToString(const StringHandle &handle) noexcept {
     return getStringPool().handleToString(handle);
 }
 
-void FrameGraph::present(const TextureHandle &input) {
+void FrameGraph::present(const TextureHandle &input, gfx::Swapchain *swapchain) {
     static const StringHandle S_NAME_PRESENT = FrameGraph::stringToHandle("Present");
     const ResourceNode &      resourceNode   = getResourceNode(input);
     CC_ASSERT(resourceNode.writer);
@@ -70,7 +70,7 @@ void FrameGraph::present(const TextureHandle &input) {
             data.input = builder.read(input);
             builder.sideEffect();
         },
-        [](const PassDataPresent &data, const DevicePassResourceTable &table) {
+        [swapchain](const PassDataPresent &data, const DevicePassResourceTable &table) {
             auto *cmdBuff = gfx::Device::getInstance()->getCommandBuffer();
 
             gfx::Texture *input = table.getRead(data.input);
@@ -80,22 +80,22 @@ void FrameGraph::present(const TextureHandle &input) {
                 region.srcExtent.height = input->getHeight();
                 region.dstExtent.width  = input->getWidth();
                 region.dstExtent.height = input->getHeight();
-                cmdBuff->blitTexture(input, nullptr, &region, 1, gfx::Filter::POINT);
+                cmdBuff->blitTexture(input, swapchain->getColorTexture(), &region, 1, gfx::Filter::POINT);
             }
         });
 }
 
-void FrameGraph::presentLastVersion(const VirtualResource *const virtualResource) {
+void FrameGraph::presentLastVersion(const VirtualResource *const virtualResource, gfx::Swapchain *swapchain) {
     const auto it = std::find_if(_resourceNodes.rbegin(), _resourceNodes.rend(), [&virtualResource](const ResourceNode &node) {
         return node.virtualResource == virtualResource;
     });
 
     CC_ASSERT(it != _resourceNodes.rend());
-    present(TextureHandle(static_cast<Handle::IndexType>(it.base() - _resourceNodes.begin() - 1)));
+    present(TextureHandle(static_cast<Handle::IndexType>(it.base() - _resourceNodes.begin() - 1)), swapchain);
 }
 
-void FrameGraph::presentFromBlackboard(const StringHandle &inputName) {
-    present(TextureHandle(_blackboard.get(inputName)));
+void FrameGraph::presentFromBlackboard(const StringHandle &inputName, gfx::Swapchain *swapchain) {
+    present(TextureHandle(_blackboard.get(inputName)), swapchain);
 }
 
 void FrameGraph::compile() {

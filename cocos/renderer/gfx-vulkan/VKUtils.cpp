@@ -24,6 +24,7 @@
 ****************************************************************************/
 
 #include "VKUtils.h"
+#include "gfx-base/GFXDef-common.h"
 
 namespace cc {
 namespace gfx {

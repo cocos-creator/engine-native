@@ -27,11 +27,13 @@
 
 #include "VKBuffer.h"
 #include "VKCommands.h"
-#include "VKContext.h"
 #include "VKDevice.h"
 #include "VKQueue.h"
 #include "VKSPIRV.h"
+#include "gfx-base/GFXDef-common.h"
+#include "gfx-base/GFXDef.h"
 #include "gfx-base/GFXSampler.h"
+#include "gfx-vulkan/VKGPUObjects.h"
 #include "vulkan/vulkan_core.h"
 
 #include <algorithm>
@@ -78,29 +80,27 @@ void insertVkDynamicStates(vector<VkDynamicState> *out, const vector<DynamicStat
 }
 
 void cmdFuncCCVKGetDeviceQueue(CCVKDevice *device, CCVKGPUQueue *gpuQueue) {
-    uint     queueType       = 0U;
-    VkBool32 needPresentable = VK_FALSE;
-    switch (gpuQueue->type) {
-        case QueueType::GRAPHICS:
-            queueType       = VK_QUEUE_GRAPHICS_BIT;
-            needPresentable = VK_TRUE;
-            break;
-        case QueueType::COMPUTE: queueType = VK_QUEUE_COMPUTE_BIT; break;
-        case QueueType::TRANSFER: queueType = VK_QUEUE_TRANSFER_BIT; break;
-    }
+    if (gpuQueue->possibleQueueFamilyIndices.empty()) {
+        uint queueType = 0U;
+        switch (gpuQueue->type) {
+            case QueueType::GRAPHICS: queueType = VK_QUEUE_GRAPHICS_BIT; break;
+            case QueueType::COMPUTE: queueType = VK_QUEUE_COMPUTE_BIT; break;
+            case QueueType::TRANSFER: queueType = VK_QUEUE_TRANSFER_BIT; break;
+        }
 
-    const CCVKGPUContext *context = device->gpuContext();
+        const CCVKGPUContext *context = device->gpuContext();
 
-    uint queueCount = utils::toUint(context->queueFamilyProperties.size());
-    for (uint i = 0U; i < queueCount; ++i) {
-        const VkQueueFamilyProperties &properties    = context->queueFamilyProperties[i];
-        const VkBool32                 isPresentable = context->queueFamilyPresentables[i];
-        if (properties.queueCount > 0 && (properties.queueFlags & queueType) && (!needPresentable || isPresentable)) {
-            vkGetDeviceQueue(device->gpuDevice()->vkDevice, i, 0, &gpuQueue->vkQueue);
-            gpuQueue->queueFamilyIndex = i;
-            break;
+        uint queueCount = utils::toUint(context->queueFamilyProperties.size());
+        for (uint i = 0U; i < queueCount; ++i) {
+            const VkQueueFamilyProperties &properties = context->queueFamilyProperties[i];
+            if (properties.queueCount > 0 && (properties.queueFlags & queueType)) {
+                gpuQueue->possibleQueueFamilyIndices.push_back(i);
+            }
         }
     }
+
+    vkGetDeviceQueue(device->gpuDevice()->vkDevice, gpuQueue->possibleQueueFamilyIndices[0], 0, &gpuQueue->vkQueue);
+    gpuQueue->queueFamilyIndex = gpuQueue->possibleQueueFamilyIndices[0];
 }
 
 void cmdFuncCCVKCreateTexture(CCVKDevice *device, CCVKGPUTexture *gpuTexture) {
@@ -108,77 +108,106 @@ void cmdFuncCCVKCreateTexture(CCVKDevice *device, CCVKGPUTexture *gpuTexture) {
 
     gpuTexture->aspectMask = mapVkImageAspectFlags(gpuTexture->format);
 
-    VkFormat             format   = mapVkFormat(gpuTexture->format);
-    VkFormatFeatureFlags features = mapVkFormatFeatureFlags(gpuTexture->usage);
-    VkFormatProperties   formatProperties;
-    vkGetPhysicalDeviceFormatProperties(device->gpuContext()->physicalDevice, format, &formatProperties);
-    if (!(formatProperties.optimalTilingFeatures & features)) {
-        const char *formatName = GFX_FORMAT_INFOS[toNumber(gpuTexture->format)].name.c_str();
-        CC_LOG_ERROR("cmdFuncCCVKCreateTexture: The specified usage for %s is not supported on this platform", formatName);
-        return;
-    }
+    // remove stencil aspect for depth textures with sampled usage
+    if (hasFlag(gpuTexture->usage, TextureUsageBit::SAMPLED)) gpuTexture->aspectMask &= ~VK_IMAGE_ASPECT_STENCIL_BIT;
 
-    VkImageUsageFlags usageFlags = mapVkImageUsageFlagBits(gpuTexture->usage);
-    if (hasFlag(gpuTexture->flags, TextureFlags::GEN_MIPMAP)) {
-        usageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    }
-
-    VkImageCreateInfo createInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
-    createInfo.flags         = mapVkImageCreateFlags(gpuTexture->type);
-    createInfo.imageType     = mapVkImageType(gpuTexture->type);
-    createInfo.format        = format;
-    createInfo.extent        = {gpuTexture->width, gpuTexture->height, gpuTexture->depth};
-    createInfo.mipLevels     = gpuTexture->mipLevels;
-    createInfo.arrayLayers   = gpuTexture->arrayLayers;
-    createInfo.samples       = device->gpuContext()->getSampleCountForAttachments(gpuTexture->format, gpuTexture->samples);
-    createInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-    createInfo.usage         = usageFlags;
-    createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-    VmaAllocationCreateInfo allocInfo{};
-    allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-    VmaAllocationInfo res;
-
-    if (ENABLE_LAZY_ALLOCATION && hasAllFlags(TEXTURE_USAGE_TRANSIENT, gpuTexture->usage)) {
-        createInfo.usage = usageFlags | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
-        allocInfo.usage  = VMA_MEMORY_USAGE_GPU_LAZILY_ALLOCATED;
-        VkResult result  = vmaCreateImage(device->gpuDevice()->memoryAllocator, &createInfo, &allocInfo,
-                                         &gpuTexture->vkImage, &gpuTexture->vmaAllocation, &res);
-        if (!result) {
-            gpuTexture->memoryless = true;
+    auto createFn = [device, gpuTexture](VkImage *pVkImage, VmaAllocation *pVmaAllocation) {
+        VkFormat             format   = mapVkFormat(gpuTexture->format);
+        VkFormatFeatureFlags features = mapVkFormatFeatureFlags(gpuTexture->usage);
+        VkFormatProperties   formatProperties;
+        vkGetPhysicalDeviceFormatProperties(device->gpuContext()->physicalDevice, format, &formatProperties);
+        if (!(formatProperties.optimalTilingFeatures & features)) {
+            const char *formatName = GFX_FORMAT_INFOS[toNumber(gpuTexture->format)].name.c_str();
+            CC_LOG_ERROR("cmdFuncCCVKCreateTexture: The specified usage for %s is not supported on this platform", formatName);
             return;
         }
 
-        // feature not present, fallback
-        createInfo.usage = usageFlags;
-        allocInfo.usage  = VMA_MEMORY_USAGE_GPU_ONLY;
-    }
+        VkImageUsageFlags usageFlags = mapVkImageUsageFlagBits(gpuTexture->usage);
+        if (hasFlag(gpuTexture->flags, TextureFlags::GEN_MIPMAP)) {
+            usageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        }
 
-    gpuTexture->memoryless = false;
-    VK_CHECK(vmaCreateImage(device->gpuDevice()->memoryAllocator, &createInfo, &allocInfo,
-                            &gpuTexture->vkImage, &gpuTexture->vmaAllocation, &res));
+        VkImageCreateInfo createInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+        createInfo.flags         = mapVkImageCreateFlags(gpuTexture->type);
+        createInfo.imageType     = mapVkImageType(gpuTexture->type);
+        createInfo.format        = format;
+        createInfo.extent        = {gpuTexture->width, gpuTexture->height, gpuTexture->depth};
+        createInfo.mipLevels     = gpuTexture->mipLevels;
+        createInfo.arrayLayers   = gpuTexture->arrayLayers;
+        createInfo.samples       = device->gpuContext()->getSampleCountForAttachments(gpuTexture->format, gpuTexture->samples);
+        createInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
+        createInfo.usage         = usageFlags;
+        createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+        VmaAllocationCreateInfo allocInfo{};
+        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+        VmaAllocationInfo res;
+
+        if (ENABLE_LAZY_ALLOCATION && hasAllFlags(TEXTURE_USAGE_TRANSIENT, gpuTexture->usage)) {
+            createInfo.usage = usageFlags | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+            allocInfo.usage  = VMA_MEMORY_USAGE_GPU_LAZILY_ALLOCATED;
+            VkResult result  = vmaCreateImage(device->gpuDevice()->memoryAllocator, &createInfo, &allocInfo,
+                                             &gpuTexture->vkImage, &gpuTexture->vmaAllocation, &res);
+            if (!result) {
+                gpuTexture->memoryless = true;
+                return;
+            }
+
+            // feature not present, fallback
+            createInfo.usage = usageFlags;
+            allocInfo.usage  = VMA_MEMORY_USAGE_GPU_ONLY;
+        }
+
+        gpuTexture->memoryless = false;
+        VK_CHECK(vmaCreateImage(device->gpuDevice()->memoryAllocator, &createInfo, &allocInfo,
+                                pVkImage, pVmaAllocation, &res));
+    };
+
+    if (gpuTexture->swapchain) {
+        uint32_t backBufferCount = device->gpuDevice()->backBufferCount;
+        gpuTexture->swapchainVkImages.resize(backBufferCount);
+        if (GFX_FORMAT_INFOS[toNumber(gpuTexture->format)].hasDepth) {
+            gpuTexture->swapchainVmaAllocations.resize(backBufferCount);
+            for (uint32_t i = 0; i < backBufferCount; ++i) {
+                createFn(&gpuTexture->swapchainVkImages[i], &gpuTexture->swapchainVmaAllocations[i]);
+            }
+        } else {
+            for (uint32_t i = 0; i < backBufferCount; ++i) {
+                gpuTexture->swapchainVkImages[i] = gpuTexture->swapchain->swapchainImages[i];
+            }
+        }
+    } else {
+        createFn(&gpuTexture->vkImage, &gpuTexture->vmaAllocation);
+    }
 }
 
 void cmdFuncCCVKCreateTextureView(CCVKDevice *device, CCVKGPUTextureView *gpuTextureView) {
-    if (!gpuTextureView->gpuTexture || !gpuTextureView->gpuTexture->vkImage) return;
+    if (!gpuTextureView->gpuTexture) return;
 
-    auto formatInfo = GFX_FORMAT_INFOS[toNumber(gpuTextureView->format)];
+    auto createFn = [device, gpuTextureView](VkImage vkImage, VkImageView *pVkImageView) {
+        VkImageViewCreateInfo createInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+        createInfo.image                           = vkImage;
+        createInfo.viewType                        = mapVkImageViewType(gpuTextureView->type);
+        createInfo.format                          = mapVkFormat(gpuTextureView->format);
+        createInfo.subresourceRange.aspectMask     = gpuTextureView->gpuTexture->aspectMask;
+        createInfo.subresourceRange.baseMipLevel   = gpuTextureView->baseLevel;
+        createInfo.subresourceRange.levelCount     = gpuTextureView->levelCount;
+        createInfo.subresourceRange.baseArrayLayer = gpuTextureView->baseLayer;
+        createInfo.subresourceRange.layerCount     = gpuTextureView->layerCount;
 
-    VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-    if (formatInfo.hasDepth) aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+        VK_CHECK(vkCreateImageView(device->gpuDevice()->vkDevice, &createInfo, nullptr, pVkImageView));
+    };
 
-    VkImageViewCreateInfo createInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-    createInfo.image                           = gpuTextureView->gpuTexture->vkImage;
-    createInfo.viewType                        = mapVkImageViewType(gpuTextureView->type);
-    createInfo.format                          = mapVkFormat(gpuTextureView->format);
-    createInfo.subresourceRange.aspectMask     = aspect;
-    createInfo.subresourceRange.baseMipLevel   = gpuTextureView->baseLevel;
-    createInfo.subresourceRange.levelCount     = gpuTextureView->levelCount;
-    createInfo.subresourceRange.baseArrayLayer = gpuTextureView->baseLayer;
-    createInfo.subresourceRange.layerCount     = gpuTextureView->layerCount;
-
-    VK_CHECK(vkCreateImageView(device->gpuDevice()->vkDevice, &createInfo, nullptr, &gpuTextureView->vkImageView));
+    if (gpuTextureView->gpuTexture->swapchain) {
+        uint32_t backBufferCount = device->gpuDevice()->backBufferCount;
+        gpuTextureView->swapchainVkImageViews.resize(backBufferCount);
+        for (uint32_t i = 0; i < backBufferCount; ++i) {
+            createFn(gpuTextureView->gpuTexture->swapchainVkImages[i], &gpuTextureView->swapchainVkImageViews[i]);
+        }
+    } else {
+        createFn(gpuTextureView->gpuTexture->vkImage, &gpuTextureView->vkImageView);
+    }
 
     device->gpuDescriptorHub()->update(gpuTextureView);
 }
@@ -584,48 +613,47 @@ void cmdFuncCCVKCreateRenderPass(CCVKDevice *device, CCVKGPURenderPass *gpuRende
 
 void cmdFuncCCVKCreateFramebuffer(CCVKDevice *device, CCVKGPUFramebuffer *gpuFramebuffer) {
     size_t              colorViewCount = gpuFramebuffer->gpuColorViews.size();
-    bool                depthSpecified = gpuFramebuffer->gpuDepthStencilView;
     bool                hasDepth       = gpuFramebuffer->gpuRenderPass->depthStencilAttachment.format != Format::UNKNOWN;
-    vector<VkImageView> attachments(colorViewCount + (depthSpecified || hasDepth ? 1 : 0));
-    uint                swapchainImageIndices = 0;
-    CCVKGPUTexture *    gpuTexture            = nullptr;
+    vector<VkImageView> attachments(colorViewCount + hasDepth);
+
+    uint swapchainImageIndices = 0;
     for (size_t i = 0U; i < colorViewCount; ++i) {
         CCVKGPUTextureView *texView = gpuFramebuffer->gpuColorViews[i];
-        if (texView) {
-            gpuTexture     = gpuFramebuffer->gpuColorViews[i]->gpuTexture;
-            attachments[i] = gpuFramebuffer->gpuColorViews[i]->vkImageView;
-        } else {
+        if (texView->gpuTexture->swapchain) {
+            gpuFramebuffer->swapchain = texView->gpuTexture->swapchain;
             swapchainImageIndices |= (1 << i);
+        } else {
+            attachments[i] = gpuFramebuffer->gpuColorViews[i]->vkImageView;
         }
     }
-    if (depthSpecified) {
-        gpuTexture                  = gpuFramebuffer->gpuDepthStencilView->gpuTexture;
-        attachments[colorViewCount] = gpuFramebuffer->gpuDepthStencilView->vkImageView;
-    } else if (hasDepth) {
+    if (gpuFramebuffer->gpuDepthStencilView->gpuTexture->swapchain) {
+        gpuFramebuffer->swapchain = gpuFramebuffer->gpuDepthStencilView->gpuTexture->swapchain;
         swapchainImageIndices |= (1 << colorViewCount);
+    } else if (hasDepth) {
+        attachments[colorViewCount] = gpuFramebuffer->gpuDepthStencilView->vkImageView;
     }
     gpuFramebuffer->isOffscreen = !swapchainImageIndices;
 
     if (gpuFramebuffer->isOffscreen) {
+        CCVKGPUTextureView *    gpuTextureView = colorViewCount ? gpuFramebuffer->gpuColorViews[0] : gpuFramebuffer->gpuDepthStencilView;
         VkFramebufferCreateInfo createInfo{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
         createInfo.renderPass      = gpuFramebuffer->gpuRenderPass->vkRenderPass;
         createInfo.attachmentCount = utils::toUint(attachments.size());
         createInfo.pAttachments    = attachments.data();
-        createInfo.width           = gpuTexture ? gpuTexture->width : 1;
-        createInfo.height          = gpuTexture ? gpuTexture->height : 1;
+        createInfo.width           = gpuTextureView->gpuTexture->width;
+        createInfo.height          = gpuTextureView->gpuTexture->height;
         createInfo.layers          = 1;
         VK_CHECK(vkCreateFramebuffer(device->gpuDevice()->vkDevice, &createInfo, nullptr, &gpuFramebuffer->vkFramebuffer));
     } else {
         // swapchain-related framebuffers need special treatments: rebuild is needed
         // whenever a user-specified attachment or swapchain itself is changed
 
-        gpuFramebuffer->swapchain          = device->gpuSwapchain();
         FramebufferListMap &fboListMap     = gpuFramebuffer->swapchain->vkSwapchainFramebufferListMap;
         auto                fboListMapIter = fboListMap.find(gpuFramebuffer);
         if (fboListMapIter != fboListMap.end() && !fboListMapIter->second.empty()) {
             return;
         }
-        size_t swapchainImageCount = gpuFramebuffer->swapchain->vkSwapchainImageViews.size();
+        size_t swapchainImageCount = gpuFramebuffer->swapchain->swapchainImages.size();
         if (fboListMapIter != fboListMap.end()) {
             fboListMapIter->second.resize(swapchainImageCount);
         } else {
@@ -635,19 +663,19 @@ void cmdFuncCCVKCreateFramebuffer(CCVKDevice *device, CCVKGPUFramebuffer *gpuFra
         createInfo.renderPass      = gpuFramebuffer->gpuRenderPass->vkRenderPass;
         createInfo.attachmentCount = utils::toUint(attachments.size());
         createInfo.pAttachments    = attachments.data();
-        createInfo.width           = device->getWidth();
-        createInfo.height          = device->getHeight();
         createInfo.layers          = 1;
         for (size_t i = 0U; i < swapchainImageCount; ++i) {
             for (size_t j = 0U; j < colorViewCount; ++j) {
                 if (swapchainImageIndices & (1 << j)) {
-                    attachments[j] = GFX_FORMAT_INFOS[toNumber(gpuFramebuffer->gpuRenderPass->colorAttachments[j].format)].hasDepth
-                                         ? gpuFramebuffer->swapchain->depthStencilImageViews[i]
-                                         : gpuFramebuffer->swapchain->vkSwapchainImageViews[i];
+                    createInfo.width  = gpuFramebuffer->gpuColorViews[j]->gpuTexture->width;
+                    createInfo.height = gpuFramebuffer->gpuColorViews[j]->gpuTexture->height;
+                    attachments[j]    = gpuFramebuffer->gpuColorViews[j]->swapchainVkImageViews[i];
                 }
             }
             if (swapchainImageIndices & (1 << colorViewCount)) {
-                attachments[colorViewCount] = gpuFramebuffer->swapchain->depthStencilImageViews[i];
+                createInfo.width            = gpuFramebuffer->gpuDepthStencilView->gpuTexture->width;
+                createInfo.height           = gpuFramebuffer->gpuDepthStencilView->gpuTexture->height;
+                attachments[colorViewCount] = gpuFramebuffer->gpuDepthStencilView->swapchainVkImageViews[i];
             }
             VK_CHECK(vkCreateFramebuffer(device->gpuDevice()->vkDevice, &createInfo, nullptr, &fboListMap[gpuFramebuffer][i]));
         }
@@ -1165,7 +1193,7 @@ void cmdFuncCCVKCopyBuffersToTexture(CCVKDevice *device, const uint8_t *const *b
 
 CC_VULKAN_API void cmdFuncCCVKCopyTextureToBuffers(CCVKDevice *device, CCVKGPUTexture *srcTexture, CCVKGPUBuffer *destBuffer, const BufferTextureCopy *regions, uint count, const CCVKGPUCommandBuffer *gpuCommandBuffer) {
     (void)device; // fix clang-tidy error
-    
+
     ThsvsImageBarrier barrier{};
     barrier.image                       = srcTexture->vkImage;
     barrier.discardContents             = false;
@@ -1238,7 +1266,7 @@ void cmdFuncCCVKDestroyFramebuffer(CCVKGPUDevice *gpuDevice, CCVKGPUFramebuffer 
             vkDestroyFramebuffer(gpuDevice->vkDevice, gpuFramebuffer->vkFramebuffer, nullptr);
             gpuFramebuffer->vkFramebuffer = VK_NULL_HANDLE;
         }
-    } else {
+    } else if (gpuDevice->swapchains.count(gpuFramebuffer->swapchain)) {
         FramebufferListMap &fboListMap     = gpuFramebuffer->swapchain->vkSwapchainFramebufferListMap;
         auto                fboListMapIter = fboListMap.find(gpuFramebuffer);
         if (fboListMapIter != fboListMap.end()) {
@@ -1379,7 +1407,7 @@ void CCVKGPURecycleBin::clear() {
 }
 
 VkSampleCountFlagBits CCVKGPUContext::getSampleCountForAttachments(Format format, SampleCount sampleCount) const {
-    if (sampleCount <= SampleCount::X1) return VK_SAMPLE_COUNT_1_BIT;
+    if (sampleCount <= SampleCount::ONE) return VK_SAMPLE_COUNT_1_BIT;
 
     static unordered_map<Format, VkSampleCountFlags> cacheMap;
     if (!cacheMap.count(format)) {

@@ -29,6 +29,7 @@
 #include "VKCommands.h"
 #include "VKDevice.h"
 #include "VKQueue.h"
+#include "vulkan/vulkan_core.h"
 
 namespace cc {
 namespace gfx {
@@ -78,20 +79,21 @@ void CCVKQueue::submit(CommandBuffer *const *cmdBuffs, uint count) {
         }
     }
 
+    VkSemaphore signal = device->gpuSemaphorePool()->alloc();
+
     VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-    submitInfo.waitSemaphoreCount   = _gpuQueue->nextWaitSemaphore ? 1 : 0;
-    submitInfo.pWaitSemaphores      = &_gpuQueue->nextWaitSemaphore;
+    submitInfo.waitSemaphoreCount   = _gpuQueue->lastSignaledSemaphores.size();
+    submitInfo.pWaitSemaphores      = _gpuQueue->lastSignaledSemaphores.data();
     submitInfo.pWaitDstStageMask    = &_gpuQueue->submitStageMask;
     submitInfo.commandBufferCount   = _gpuQueue->commandBuffers.size();
     submitInfo.pCommandBuffers      = &_gpuQueue->commandBuffers[0];
-    submitInfo.signalSemaphoreCount = _gpuQueue->nextSignalSemaphore ? 1 : 0;
-    submitInfo.pSignalSemaphores    = &_gpuQueue->nextSignalSemaphore;
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores    = &signal;
 
     VkFence vkFence = device->gpuFencePool()->alloc();
     VK_CHECK(vkQueueSubmit(_gpuQueue->vkQueue, 1, &submitInfo, vkFence));
 
-    _gpuQueue->nextWaitSemaphore   = _gpuQueue->nextSignalSemaphore;
-    _gpuQueue->nextSignalSemaphore = device->gpuSemaphorePool()->alloc();
+    _gpuQueue->lastSignaledSemaphores.assign(1, signal);
 }
 
 } // namespace gfx

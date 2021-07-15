@@ -68,10 +68,7 @@ void TextureValidator::doInit(const TextureViewInfo &info) {
 }
 
 void TextureValidator::doInit(const SwapchainTextureInfo &info) {
-    SwapchainTextureInfo actorInfo = info;
-    actorInfo.swapchain = static_cast<SwapchainValidator *>(info.swapchain)->getActor();
-
-    Texture::initialize(info, _actor);
+    // the actor is already initialized
 }
 
 void TextureValidator::doDestroy() {

@@ -25,11 +25,6 @@
 
 #pragma once
 
-#include <thread>
-#include <utility>
-
-#include "base/CachedArray.h"
-
 #include "VKStd.h"
 #include "VKUtils.h"
 
@@ -41,6 +36,9 @@ namespace gfx {
 
 class CCVKGPUContext final : public Object {
 public:
+    bool initialize();
+    void destroy();
+
     VkInstance               vkInstance            = VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT vkDebugUtilsMessenger = VK_NULL_HANDLE;
     VkDebugReportCallbackEXT vkDebugReport         = VK_NULL_HANDLE;
@@ -55,11 +53,20 @@ public:
     VkPhysicalDeviceProperties2                   physicalDeviceProperties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
     VkPhysicalDeviceMemoryProperties              physicalDeviceMemoryProperties{};
     vector<VkQueueFamilyProperties>               queueFamilyProperties;
-    vector<VkBool32>                              queueFamilyPresentables;
 
-    VkSurfaceKHR vkSurface = VK_NULL_HANDLE;
+    uint32_t majorVersion = 0;
+    uint32_t minorVersion = 0;
 
-    VkSwapchainCreateInfoKHR swapchainCreateInfo{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+    bool validationEnabled = false;
+
+    vector<const char *> layers;
+    vector<const char *> extensions;
+
+    inline bool checkExtension(const String &extension) const {
+        return std::any_of(extensions.begin(), extensions.end(), [&extension](auto &ext) {
+            return std::strcmp(ext, extension.c_str()) == 0;
+        });
+    }
 
     VkSampleCountFlagBits getSampleCountForAttachments(Format format, SampleCount sampleCount) const;
 };
@@ -89,6 +96,7 @@ public:
     vector<VkSampleCountFlagBits> sampleCounts; // per subpass
 };
 
+class CCVKGPUSwapchain;
 class CCVKGPUTexture final : public Object {
 public:
     TextureType        type        = TextureType::TEX2D;
@@ -100,13 +108,17 @@ public:
     uint               size        = 0U;
     uint               arrayLayers = 1U;
     uint               mipLevels   = 1U;
-    SampleCount        samples     = SampleCount::X1;
+    SampleCount        samples     = SampleCount::ONE;
     TextureFlags       flags       = TextureFlagBit::NONE;
     VkImageAspectFlags aspectMask  = VK_IMAGE_ASPECT_COLOR_BIT;
     bool               memoryless  = false;
 
     VkImage       vkImage       = VK_NULL_HANDLE;
     VmaAllocation vmaAllocation = VK_NULL_HANDLE;
+
+    CCVKGPUSwapchain *    swapchain = nullptr;
+    vector<VkImage>       swapchainVkImages;
+    vector<VmaAllocation> swapchainVmaAllocations;
 
     vector<ThsvsAccessType> currentAccessTypes;
 
@@ -124,6 +136,8 @@ public:
     uint            levelCount = 1U;
     uint            baseLayer  = 0U;
     uint            layerCount = 1U;
+
+    vector<VkImageView> swapchainVkImageViews;
 
     // descriptor infos
     VkImageView vkImageView = VK_NULL_HANDLE;
@@ -182,7 +196,6 @@ public:
     uint           range     = 0U;
 };
 
-class CCVKGPUSwapchain;
 class CCVKGPUFramebuffer final : public Object {
 public:
     CCVKGPURenderPass *    gpuRenderPass = nullptr;
@@ -199,16 +212,17 @@ using FramebufferListMapIter = FramebufferListMap::iterator;
 
 class CCVKGPUSwapchain final : public Object {
 public:
-    uint                            curImageIndex = 0U;
-    VkSwapchainKHR                  vkSwapchain   = VK_NULL_HANDLE;
-    vector<VkImageView>             vkSwapchainImageViews;
-    FramebufferListMap              vkSwapchainFramebufferListMap;
-    vector<vector<ThsvsAccessType>> swapchainImageAccessTypes;
-    vector<vector<ThsvsAccessType>> depthStencilImageAccessTypes;
+    VkSurfaceKHR             vkSurface = VK_NULL_HANDLE;
+    VkSwapchainCreateInfoKHR createInfo{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+
+    uint               curImageIndex = 0U;
+    VkSwapchainKHR     vkSwapchain   = VK_NULL_HANDLE;
+    FramebufferListMap vkSwapchainFramebufferListMap;
+    vector<VkBool32>   queueFamilyPresentables;
+    VkResult           lastPresentResult = VK_SUCCESS;
+
     // external references
-    vector<VkImage>     swapchainImages;
-    vector<VkImage>     depthStencilImages;
-    vector<VkImageView> depthStencilImageViews;
+    vector<VkImage> swapchainImages;
 };
 
 class CCVKGPUCommandBuffer final : public Object {
@@ -222,12 +236,12 @@ public:
 
 class CCVKGPUQueue final : public Object {
 public:
-    QueueType                    type                = QueueType::GRAPHICS;
-    VkQueue                      vkQueue             = VK_NULL_HANDLE;
-    uint                         queueFamilyIndex    = 0U;
-    VkSemaphore                  nextWaitSemaphore   = VK_NULL_HANDLE;
-    VkSemaphore                  nextSignalSemaphore = VK_NULL_HANDLE;
-    VkPipelineStageFlags         submitStageMask     = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    QueueType                    type             = QueueType::GRAPHICS;
+    VkQueue                      vkQueue          = VK_NULL_HANDLE;
+    uint                         queueFamilyIndex = 0U;
+    vector<uint>                 possibleQueueFamilyIndices;
+    vector<VkSemaphore>          lastSignaledSemaphores;
+    VkPipelineStageFlags         submitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     CachedArray<VkCommandBuffer> commandBuffers;
 };
 
@@ -367,7 +381,7 @@ public:
     CCVKGPUTextureView defaultTextureView;
     CCVKGPUBuffer      defaultBuffer;
 
-    CCVKGPUSwapchain *swapchain = nullptr; // reference
+    unordered_set<CCVKGPUSwapchain *> swapchains;
 
     CCVKGPUCommandBufferPool *getCommandBufferPool();
     CCVKGPUDescriptorSetPool *getDescriptorSetPool(uint layoutID);
@@ -1020,6 +1034,41 @@ public:
         _resources.resize(16);
     }
 
+    void collect(CCVKGPUTexture *gpuTexture) {
+        if (_resources.size() <= _count) {
+            _resources.resize(_count * 2);
+        }
+        if (gpuTexture->swapchain) {
+            if (GFX_FORMAT_INFOS[toNumber(gpuTexture->format)].hasDepth) {
+                for (uint32_t i = 0; i < gpuTexture->swapchainVkImages.size(); ++i) {
+                    vmaDestroyImage(_device->memoryAllocator, gpuTexture->swapchainVkImages[i], gpuTexture->swapchainVmaAllocations[i]);
+                }
+                gpuTexture->swapchainVkImages.clear();
+                gpuTexture->swapchainVmaAllocations.clear();
+            }
+        } else {
+            Resource &res = _resources[_count++];
+            res.type      = RecycledType::TEXTURE;
+            res.image     = {gpuTexture->vkImage, gpuTexture->vmaAllocation};
+        }
+    }
+
+    void collect(CCVKGPUTextureView *gpuTextureView) {
+        if (_resources.size() <= _count) {
+            _resources.resize(_count * 2);
+        }
+        if (gpuTextureView->gpuTexture->swapchain) {
+            for (VkImageView swapchainVkImageView : gpuTextureView->swapchainVkImageViews) {
+                vkDestroyImageView(_device->vkDevice, swapchainVkImageView, nullptr);
+            }
+            gpuTextureView->swapchainVkImageViews.clear();
+        } else {
+            Resource &res   = _resources[_count++];
+            res.type        = RecycledType::TEXTURE_VIEW;
+            res.vkImageView = gpuTextureView->vkImageView;
+        }
+    }
+
 #define DEFINE_RECYCLE_BIN_COLLECT_FN(_type, typeValue, expr)                  \
     void collect(_type *gpuRes) { /* NOLINT(bugprone-macro-parentheses) N/A */ \
         if (_resources.size() <= _count) {                                     \
@@ -1031,8 +1080,6 @@ public:
     }
 
     DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPUBuffer, RecycledType::BUFFER, (res.buffer = {gpuRes->vkBuffer, gpuRes->vmaAllocation}))
-    DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPUTexture, RecycledType::TEXTURE, (res.image = {gpuRes->vkImage, gpuRes->vmaAllocation}))
-    DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPUTextureView, RecycledType::TEXTURE_VIEW, res.vkImageView = gpuRes->vkImageView)
     DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPURenderPass, RecycledType::RENDER_PASS, res.gpuRenderPass = gpuRes)
     DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPUFramebuffer, RecycledType::FRAMEBUFFER, res.gpuFramebuffer = gpuRes)
     DEFINE_RECYCLE_BIN_COLLECT_FN(CCVKGPUSampler, RecycledType::SAMPLER, res.gpuSampler = gpuRes)

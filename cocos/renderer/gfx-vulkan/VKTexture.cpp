@@ -29,6 +29,8 @@
 #include "VKCommands.h"
 #include "VKDevice.h"
 #include "VKTexture.h"
+#include "gfx-base/GFXDef.h"
+#include "gfx-vulkan/VKSwapchain.h"
 
 namespace cc {
 namespace gfx {
@@ -120,6 +122,35 @@ void CCVKTexture::doResize(uint width, uint height, uint size) {
     }
 
     cmdFuncCCVKCreateTextureView(CCVKDevice::getInstance(), _gpuTextureView);
+}
+
+///////////////////////////// Swapchian Specific /////////////////////////////
+
+void CCVKTexture::doInit(const SwapchainTextureInfo &info) {
+    _gpuTexture              = CC_NEW(CCVKGPUTexture);
+    _gpuTexture->type        = _type;
+    _gpuTexture->format      = _format;
+    _gpuTexture->usage       = _usage;
+    _gpuTexture->width       = _width;
+    _gpuTexture->height      = _height;
+    _gpuTexture->depth       = _depth;
+    _gpuTexture->size        = _size;
+    _gpuTexture->arrayLayers = _layerCount;
+    _gpuTexture->mipLevels   = _levelCount;
+    _gpuTexture->samples     = SampleCount::ONE; // no MSAA swapchain images
+    _gpuTexture->flags       = _flags;
+
+    _gpuTexture->swapchain  = static_cast<CCVKSwapchain *>(info.swapchain)->gpuSwapchain();
+    _gpuTexture->memoryless = true;
+
+    _gpuTextureView             = CC_NEW(CCVKGPUTextureView);
+    _gpuTextureView->gpuTexture = _gpuTexture;
+    _gpuTextureView->type       = _type;
+    _gpuTextureView->format     = _format;
+    _gpuTextureView->baseLevel  = _baseLevel;
+    _gpuTextureView->levelCount = _levelCount;
+    _gpuTextureView->baseLayer  = _baseLayer;
+    _gpuTextureView->layerCount = _layerCount;
 }
 
 } // namespace gfx

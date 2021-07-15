@@ -26,53 +26,36 @@
 #pragma once
 
 #include "VKStd.h"
-#include "gfx-base/GFXContext.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
 
 class CCVKDevice;
 class CCVKGPUDevice;
-class CCVKGPUContext;
+class CCVKGPUSwapchain;
 class CCVKGPUSwapchain;
 class CCVKGPUSemaphorePool;
 
-class CC_VULKAN_API CCVKContext final : public Context {
+class CC_VULKAN_API CCVKSwapchain final : public Swapchain {
 public:
-    CCVKContext()           = default;
-    ~CCVKContext() override = default;
+    CCVKSwapchain()           = default;
+    ~CCVKSwapchain() override = default;
 
-    void present() override {}
+    inline CCVKGPUSwapchain *gpuSwapchain() { return _gpuSwapchain; }
 
-    inline bool checkExtension(const String &extension) const {
-        return std::any_of(_extensions.begin(), _extensions.end(), [&extension](auto &ext) {
-            return std::strcmp(ext, extension.c_str()) == 0;
-        });
-    }
-
-    inline int                         majorVersion() const { return _majorVersion; }
-    inline int                         minorVersion() const { return _minorVersion; }
-    inline CCVKGPUContext *            gpuContext() { return _gpuContext; }
-    inline const vector<const char *> &getLayers() const { return _layers; }
-    inline const vector<const char *> &getExtensions() const { return _extensions; }
-
-    inline bool validationEnabled() const { return _validationEnabled; }
-
-    void releaseSurface(uintptr_t windowHandle);
-    void acquireSurface(uintptr_t windowHandle);
+    bool checkSwapchainStatus();
 
 protected:
-    bool doInit(const ContextInfo &info) override;
+    void doInit(const SwapchainInfo &info) override;
     void doDestroy() override;
+    void doResize(uint32_t width, uint32_t height) override;
+    void doDestroySurface() override;
+    void doCreateSurface(void *windowHandle) override;
 
-    CCVKGPUContext *     _gpuContext      = nullptr;
-    bool                 _isPrimaryContex = false;
-    int                  _majorVersion    = 0;
-    int                  _minorVersion    = 0;
-    vector<const char *> _layers;
-    vector<const char *> _extensions;
+    void destroySwapchain(const CCVKGPUDevice *gpuDevice);
 
-    bool _validationEnabled = false;
+    CCVKGPUSwapchain *_gpuSwapchain = nullptr;
 };
 
 } // namespace gfx

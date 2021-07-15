@@ -77,17 +77,7 @@ void TextureAgent::doInit(const TextureViewInfo &info) {
 }
 
 void TextureAgent::doInit(const SwapchainTextureInfo &info) {
-    SwapchainTextureInfo actorInfo = info;
-    actorInfo.swapchain            = static_cast<SwapchainAgent *>(info.swapchain)->getActor();
-
-    ENQUEUE_MESSAGE_2(
-        DeviceAgent::getInstance()->getMessageQueue(),
-        TextureViewInit,
-        actor, getActor(),
-        info, actorInfo,
-        {
-            Texture::initialize(info, actor);
-        });
+    // the actor is already initialized
 }
 
 void TextureAgent::doDestroy() {

@@ -117,7 +117,15 @@ void DeviceValidator::doDestroy() {
 }
 
 void DeviceValidator::acquire(Swapchain *const *swapchains, uint32_t count) {
-    _actor->acquire(swapchains, count);
+    static vector<Swapchain *> swapchainActors;
+    swapchainActors.resize(count);
+
+    for (uint i = 0U; i < count; ++i) {
+        auto *swapchain = static_cast<SwapchainValidator *>(swapchains[i]);
+        swapchainActors[i] = swapchain->getActor();
+    }
+
+    _actor->acquire(swapchainActors.data(), count);
 }
 
 void DeviceValidator::present() {

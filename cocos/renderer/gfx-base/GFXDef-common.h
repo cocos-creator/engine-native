@@ -456,9 +456,10 @@ using TextureFlags = TextureFlagBit;
 CC_ENUM_BITWISE_OPERATORS(TextureFlagBit);
 
 enum class SampleCount {
-    ONE,
-    MULTIPLE,
-    MAX_AVAILABLE,
+    ONE,                  // Single sample
+    MULTIPLE_PERFORMANCE, // Multiple samples prioritising performance over quality
+    MULTIPLE_BALANCE,     // Multiple samples leveraging both quality and performance
+    MULTIPLE_QUALITY,     // Multiple samples prioritising quality over performance
 };
 CC_ENUM_CONVERSION_OPERATOR(SampleCount);
 
