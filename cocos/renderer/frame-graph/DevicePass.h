@@ -46,6 +46,7 @@ public:
     DevicePass &operator=(DevicePass &&) = delete;
 
     void execute();
+    RenderPass &getRenderPass() {return _renderPass;}
 
 private:
     struct LogicPass final {

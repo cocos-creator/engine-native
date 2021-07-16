@@ -428,6 +428,9 @@ void CCVKCommandBuffer::draw(const DrawInfo &info) {
             }
         }
     }
+
+    CCVKGPUDevice *gpuDevice     = CCVKDevice::getInstance()->gpuDevice();
+    vkDeviceWaitIdle(gpuDevice->vkDevice);
 }
 
 void CCVKCommandBuffer::execute(CommandBuffer *const *cmdBuffs, uint count) {

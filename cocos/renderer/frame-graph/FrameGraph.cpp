@@ -104,7 +104,7 @@ void FrameGraph::compile() {
     computeResourceLifetime();
 
     if (_merge) {
-        mergePassNodes();
+        //mergePassNodes();
     }
 
     computeStoreActionAndMemoryless();
@@ -188,6 +188,11 @@ Handle FrameGraph::createResourceNode(VirtualResource *const virtualResource) {
     resourceNode.virtualResource = virtualResource;
     resourceNode.version         = virtualResource->_version;
     _resourceNodes.emplace_back(resourceNode);
+
+	if (_resourceNodes.size() == 17) {
+		int i = 0;
+		int j = 10;
+	}
     return Handle{static_cast<Handle::IndexType>(index)};
 }
 
@@ -211,10 +216,12 @@ void FrameGraph::cull() {
     stack.clear();
     stack.reserve(_resourceNodes.size());
 
+	int i = 0;
     for (ResourceNode &resourceNode : _resourceNodes) {
         if (resourceNode.readerCount == 0 && resourceNode.writer) {
             stack.push_back(&resourceNode);
         }
+		++i;
     }
 
     while (!stack.empty()) {

@@ -35,6 +35,7 @@ namespace framegraph {
 
 class PassNode;
 class FrameGraph;
+class DevicePass;
 
 class DevicePassResourceTable final {
 public:
@@ -53,6 +54,9 @@ public:
     std::enable_if_t<std::is_base_of<gfx::GFXObject, typename Type::DeviceResource>::value, typename Type::DeviceResource *>
     getWrite(TypedHandle<Type> const handle) const noexcept;
 
+    void       setDevicePass(DevicePass *pass) {_devicePass = pass;}
+    DevicePass *getDevicePass() const {return _devicePass;}
+
 private:
     using ResourceDictionary = std::unordered_map<Handle, gfx::GFXObject *, Handle::Hasher>;
 
@@ -63,6 +67,7 @@ private:
     ResourceDictionary reads{};
     ResourceDictionary writes{};
 
+    DevicePass *_devicePass;
     friend class DevicePass;
 };
 

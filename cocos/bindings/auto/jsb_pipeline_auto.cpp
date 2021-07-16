@@ -13,9 +13,8 @@
 #include "renderer/pipeline/GlobalDescriptorSetManager.h"
 #include "renderer/pipeline/InstancedBuffer.h"
 #include "renderer/pipeline/deferred/DeferredPipeline.h"
-#include "renderer/pipeline/deferred/GbufferFlow.h"
+#include "renderer/pipeline/deferred/MainFlow.h"
 #include "renderer/pipeline/deferred/GbufferStage.h"
-#include "renderer/pipeline/deferred/LightingFlow.h"
 #include "renderer/pipeline/deferred/LightingStage.h"
 #include "renderer/pipeline/deferred/PostprocessStage.h"
 #include "cocos/renderer/gfx-base/GFXBase.h"
@@ -2087,63 +2086,63 @@ bool js_register_pipeline_DeferredPipeline(se::Object* obj) // NOLINT(readabilit
     se::ScriptEngine::getInstance()->clearException();
     return true;
 }
-se::Object* __jsb_cc_pipeline_GbufferFlow_proto = nullptr;
-se::Class* __jsb_cc_pipeline_GbufferFlow_class = nullptr;
+se::Object* __jsb_cc_pipeline_MainFlow_proto = nullptr;
+se::Class* __jsb_cc_pipeline_MainFlow_class = nullptr;
 
-static bool js_pipeline_GbufferFlow_getInitializeInfo(se::State& s) // NOLINT(readability-identifier-naming)
+static bool js_pipeline_MainFlow_getInitializeInfo(se::State& s) // NOLINT(readability-identifier-naming, google-runtime-references)
 {
     const auto& args = s.args();
     size_t argc = args.size();
     CC_UNUSED bool ok = true;
     if (argc == 0) {
-        const cc::pipeline::RenderFlowInfo& result = cc::pipeline::GbufferFlow::getInitializeInfo();
+        const cc::pipeline::RenderFlowInfo& result = cc::pipeline::MainFlow::getInitializeInfo();
         ok &= nativevalue_to_se(result, s.rval(), nullptr /*ctx*/);
-        SE_PRECONDITION2(ok, false, "js_pipeline_GbufferFlow_getInitializeInfo : Error processing arguments");
+        SE_PRECONDITION2(ok, false, "js_pipeline_MainFlow_getInitializeInfo : Error processing arguments");
         SE_HOLD_RETURN_VALUE(result, s.thisObject(), s.rval());
         return true;
     }
     SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
     return false;
 }
-SE_BIND_FUNC(js_pipeline_GbufferFlow_getInitializeInfo)
+SE_BIND_FUNC(js_pipeline_MainFlow_getInitializeInfo)
 
-SE_DECLARE_FINALIZE_FUNC(js_cc_pipeline_GbufferFlow_finalize)
+SE_DECLARE_FINALIZE_FUNC(js_cc_pipeline_MainFlow_finalize)
 
-static bool js_pipeline_GbufferFlow_constructor(se::State& s) // NOLINT(readability-identifier-naming) constructor.c
+static bool js_pipeline_MainFlow_constructor(se::State& s) // NOLINT(readability-identifier-naming, google-runtime-references) constructor.c
 {
-    cc::pipeline::GbufferFlow* cobj = JSB_ALLOC(cc::pipeline::GbufferFlow);
+    cc::pipeline::MainFlow* cobj = JSB_ALLOC(cc::pipeline::MainFlow);
     s.thisObject()->setPrivateData(cobj);
     se::NonRefNativePtrCreatedByCtorMap::emplace(cobj);
     return true;
 }
-SE_BIND_CTOR(js_pipeline_GbufferFlow_constructor, __jsb_cc_pipeline_GbufferFlow_class, js_cc_pipeline_GbufferFlow_finalize)
+SE_BIND_CTOR(js_pipeline_MainFlow_constructor, __jsb_cc_pipeline_MainFlow_class, js_cc_pipeline_MainFlow_finalize)
 
 
 
-static bool js_cc_pipeline_GbufferFlow_finalize(se::State& s) // NOLINT(readability-identifier-naming)
+static bool js_cc_pipeline_MainFlow_finalize(se::State& s) // NOLINT(readability-identifier-naming, google-runtime-references)
 {
-    auto iter = se::NonRefNativePtrCreatedByCtorMap::find(SE_THIS_OBJECT<cc::pipeline::GbufferFlow>(s));
+    auto iter = se::NonRefNativePtrCreatedByCtorMap::find(SE_THIS_OBJECT<cc::pipeline::MainFlow>(s));
     if (iter != se::NonRefNativePtrCreatedByCtorMap::end())
     {
         se::NonRefNativePtrCreatedByCtorMap::erase(iter);
-        auto* cobj = SE_THIS_OBJECT<cc::pipeline::GbufferFlow>(s);
+        auto* cobj = SE_THIS_OBJECT<cc::pipeline::MainFlow>(s);
         JSB_FREE(cobj);
     }
     return true;
 }
-SE_BIND_FINALIZE_FUNC(js_cc_pipeline_GbufferFlow_finalize)
+SE_BIND_FINALIZE_FUNC(js_cc_pipeline_MainFlow_finalize)
 
-bool js_register_pipeline_GbufferFlow(se::Object* obj) // NOLINT(readability-identifier-naming)
+bool js_register_pipeline_MainFlow(se::Object* obj) // NOLINT(readability-identifier-naming, google-runtime-references)
 {
-    auto* cls = se::Class::create("GbufferFlow", obj, __jsb_cc_pipeline_RenderFlow_proto, _SE(js_pipeline_GbufferFlow_constructor));
+    auto* cls = se::Class::create("MainFlow", obj, __jsb_cc_pipeline_RenderFlow_proto, _SE(js_pipeline_MainFlow_constructor));
 
-    cls->defineStaticFunction("getInitializeInfo", _SE(js_pipeline_GbufferFlow_getInitializeInfo));
-    cls->defineFinalizeFunction(_SE(js_cc_pipeline_GbufferFlow_finalize));
+    cls->defineStaticFunction("getInitializeInfo", _SE(js_pipeline_MainFlow_getInitializeInfo));
+    cls->defineFinalizeFunction(_SE(js_cc_pipeline_MainFlow_finalize));
     cls->install();
-    JSBClassType::registerClass<cc::pipeline::GbufferFlow>(cls);
+    JSBClassType::registerClass<cc::pipeline::MainFlow>(cls);
 
-    __jsb_cc_pipeline_GbufferFlow_proto = cls->getProto();
-    __jsb_cc_pipeline_GbufferFlow_class = cls;
+    __jsb_cc_pipeline_MainFlow_proto = cls->getProto();
+    __jsb_cc_pipeline_MainFlow_class = cls;
 
     se::ScriptEngine::getInstance()->clearException();
     return true;
@@ -2205,67 +2204,6 @@ bool js_register_pipeline_GbufferStage(se::Object* obj) // NOLINT(readability-id
 
     __jsb_cc_pipeline_GbufferStage_proto = cls->getProto();
     __jsb_cc_pipeline_GbufferStage_class = cls;
-
-    se::ScriptEngine::getInstance()->clearException();
-    return true;
-}
-se::Object* __jsb_cc_pipeline_LightingFlow_proto = nullptr;
-se::Class* __jsb_cc_pipeline_LightingFlow_class = nullptr;
-
-static bool js_pipeline_LightingFlow_getInitializeInfo(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    const auto& args = s.args();
-    size_t argc = args.size();
-    CC_UNUSED bool ok = true;
-    if (argc == 0) {
-        const cc::pipeline::RenderFlowInfo& result = cc::pipeline::LightingFlow::getInitializeInfo();
-        ok &= nativevalue_to_se(result, s.rval(), nullptr /*ctx*/);
-        SE_PRECONDITION2(ok, false, "js_pipeline_LightingFlow_getInitializeInfo : Error processing arguments");
-        SE_HOLD_RETURN_VALUE(result, s.thisObject(), s.rval());
-        return true;
-    }
-    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
-    return false;
-}
-SE_BIND_FUNC(js_pipeline_LightingFlow_getInitializeInfo)
-
-SE_DECLARE_FINALIZE_FUNC(js_cc_pipeline_LightingFlow_finalize)
-
-static bool js_pipeline_LightingFlow_constructor(se::State& s) // NOLINT(readability-identifier-naming) constructor.c
-{
-    cc::pipeline::LightingFlow* cobj = JSB_ALLOC(cc::pipeline::LightingFlow);
-    s.thisObject()->setPrivateData(cobj);
-    se::NonRefNativePtrCreatedByCtorMap::emplace(cobj);
-    return true;
-}
-SE_BIND_CTOR(js_pipeline_LightingFlow_constructor, __jsb_cc_pipeline_LightingFlow_class, js_cc_pipeline_LightingFlow_finalize)
-
-
-
-static bool js_cc_pipeline_LightingFlow_finalize(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    auto iter = se::NonRefNativePtrCreatedByCtorMap::find(SE_THIS_OBJECT<cc::pipeline::LightingFlow>(s));
-    if (iter != se::NonRefNativePtrCreatedByCtorMap::end())
-    {
-        se::NonRefNativePtrCreatedByCtorMap::erase(iter);
-        auto* cobj = SE_THIS_OBJECT<cc::pipeline::LightingFlow>(s);
-        JSB_FREE(cobj);
-    }
-    return true;
-}
-SE_BIND_FINALIZE_FUNC(js_cc_pipeline_LightingFlow_finalize)
-
-bool js_register_pipeline_LightingFlow(se::Object* obj) // NOLINT(readability-identifier-naming)
-{
-    auto* cls = se::Class::create("LightingFlow", obj, __jsb_cc_pipeline_RenderFlow_proto, _SE(js_pipeline_LightingFlow_constructor));
-
-    cls->defineStaticFunction("getInitializeInfo", _SE(js_pipeline_LightingFlow_getInitializeInfo));
-    cls->defineFinalizeFunction(_SE(js_cc_pipeline_LightingFlow_finalize));
-    cls->install();
-    JSBClassType::registerClass<cc::pipeline::LightingFlow>(cls);
-
-    __jsb_cc_pipeline_LightingFlow_proto = cls->getProto();
-    __jsb_cc_pipeline_LightingFlow_class = cls;
 
     se::ScriptEngine::getInstance()->clearException();
     return true;
@@ -2403,8 +2341,7 @@ bool register_all_pipeline(se::Object* obj)
     js_register_pipeline_ForwardFlow(ns);
     js_register_pipeline_InstancedBuffer(ns);
     js_register_pipeline_DeferredPipeline(ns);
-    js_register_pipeline_GbufferFlow(ns);
-    js_register_pipeline_LightingFlow(ns);
+    js_register_pipeline_MainFlow(ns);
     js_register_pipeline_ShadowFlow(ns);
     return true;
 }

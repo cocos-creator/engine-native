@@ -59,6 +59,7 @@ DevicePass::DevicePass(const FrameGraph &graph, std::vector<PassNode *> const &s
     for (PassNode *const passNode : subPassNodes) {
         _resourceTable.extract(graph, passNode, multiSubPass, renderTargets);
     }
+    _resourceTable.setDevicePass(this);
 }
 
 void DevicePass::execute() {

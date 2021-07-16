@@ -38,6 +38,14 @@ class RenderInstancedQueue;
 class RenderAdditiveLightQueue;
 class PlanarShadowQueue;
 struct DeferredRenderData;
+class DeferredPipeline;
+
+struct RenderElem {
+    RenderObject renderObject;
+    gfx::DescriptorSet *set;
+    uint        modelIndex;
+    uint        passIndex;
+};
 
 class CC_DLL LightingStage : public RenderStage {
 public:
@@ -49,12 +57,23 @@ public:
     bool initialize(const RenderStageInfo &info) override;
     void activate(RenderPipeline *pipeline, RenderFlow *flow) override;
     void destroy() override;
+    void renderBAK(scene::Camera *camera);
     void render(scene::Camera *camera) override;
 
-    void initLightingBuffer();
+    ReflectionComp *getReflectionComp() {return _reflectionComp;}
+    RenderElem     getRendElement();
+    void           addDenoiseIndex() {_denoiseIndex = (_denoiseIndex + 1) % _reflectionElems.size();}
+    RenderQueue    *getReflectRenderQueue() {return _reflectionRenderQueue;}
 
+    Mat4          matViewProj;
 private:
     void gatherLights(scene::Camera *camera);
+    void initLightingBuffer();
+    void fgLightingPass(scene::Camera *camera);
+    void fgSsprPass(scene::Camera *camera);
+    void recordCommands(DeferredPipeline *pipeline, gfx::RenderPass *renderPass);
+
+    void putTransparentObj2Queue();
 
     static RenderStageInfo initInfo;
     PlanarShadowQueue *    _planarShadowQueue{nullptr};
@@ -76,6 +95,10 @@ private:
     RenderQueue *    _reflectionRenderQueue{nullptr};
     uint             _reflectionPhaseID{0};
     gfx::RenderPass *_reflectionPass{nullptr};
+
+    std::vector<RenderElem> _reflectionElems;
+    uint _denoiseIndex = 0;         // use to get corrrect texture string handle
+
 };
 
 } // namespace pipeline

@@ -28,9 +28,9 @@ public:
     void initReflectionRes();
     void initDenoiseRes();
 
-    inline const gfx::DescriptorSet*      getDescriptorSet() { return _compDescriptorSet; }
+    inline gfx::DescriptorSet*      getDescriptorSet() { return _compDescriptorSet; }
     inline const gfx::PipelineState*      getPipelineState() { return _compPipelineState; }
-    inline const gfx::DescriptorSet*      getDenoiseDescriptorSet() { return _compDenoiseDescriptorSet; }
+    inline gfx::DescriptorSet*      getDenoiseDescriptorSet() { return _compDenoiseDescriptorSet; }
     inline const gfx::PipelineState*      getDenoisePipelineState() { return _compDenoisePipelineState; }
     inline const gfx::Texture*            getReflectionTex() { return _reflectionTex; }
     inline const gfx::RenderPass*         getClearPass() { return _clearPass; }
@@ -43,6 +43,9 @@ public:
     inline int                            getGroupSizeX() const { return _groupSizeX; }
     inline int                            getGroupSizeY() const { return _groupSizeY; }
     inline bool                           isInitialized() const { return _initialized; }
+
+    inline gfx::Buffer *getConstantsBuffer() {return _compConstantsBuffer;}
+    inline gfx::Sampler *getSampler() {return _sampler;}
 
 private:
     template <typename T>

@@ -65,5 +65,14 @@ void RenderFlow::destroy() {
     _stages.clear();
 }
 
+RenderStage *RenderFlow::getRenderstageByName(const String &_name) {
+    for (auto node : _stages) {
+        if (node->getName() == _name) {
+            return node;
+        }
+    }
+    return nullptr;
+}
+
 } //namespace pipeline
 } // namespace cc

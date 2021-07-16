@@ -32,6 +32,9 @@
 #include "gfx-base/GFXDevice.h"
 #include "gfx-base/GFXFramebuffer.h"
 #include "scene/SubModel.h"
+#include "frame-graph/PassNodeBuilder.h"
+#include "frame-graph/DevicePass.h"
+#include "frame-graph/Resource.h"
 
 namespace cc {
 namespace pipeline {
@@ -41,6 +44,8 @@ RenderStageInfo PostprocessStage::initInfo = {
     0,
     {{true, RenderQueueSortMode::BACK_TO_FRONT, {"default"}}},
 };
+const RenderStageInfo &PostprocessStage::getInitializeInfo() { return PostprocessStage::initInfo; }
+
 
 PostprocessStage::PostprocessStage() {
     _uiPhase = CC_NEW(UIPhase);
@@ -83,47 +88,80 @@ void PostprocessStage::destroy() {
 }
 
 void PostprocessStage::render(scene::Camera *camera) {
-    auto *pp = dynamic_cast<DeferredPipeline *>(_pipeline);
-    assert(pp != nullptr);
-    gfx::CommandBuffer *cmdBf = pp->getCommandBuffers()[0];
+    struct renderData {
+        framegraph::TextureHandle lightingOut;      // read from lighting output
+        framegraph::TextureHandle depth;            // read from depth
+        framegraph::TextureHandle backBuffer;       // write to back buffer
+    };
 
-    _pipeline->getPipelineUBO()->updateCameraUBO(camera);
-    gfx::Rect renderArea = pp->getRenderArea(camera);
+    auto postSetup = [&] (framegraph::PassNodeBuilder &builder, renderData &data) {
+        data.lightingOut = builder.read(framegraph::TextureHandle(builder.readFromBlackboard(DeferredPipeline::_lightingOut)));
+        builder.writeToBlackboard(DeferredPipeline::_lightingOut, data.lightingOut);
 
-    if (hasFlag(static_cast<gfx::ClearFlags>(camera->clearFlag), gfx::ClearFlagBit::COLOR)) {
-        _clearColors[0].x = camera->clearColor.x;
-        _clearColors[0].y = camera->clearColor.y;
-        _clearColors[0].z = camera->clearColor.z;
-    }
+        // depth is as an attachment
+        framegraph::RenderTargetAttachment::Descriptor depthAttachInfo;
+        depthAttachInfo.usage       = framegraph::RenderTargetAttachment::Usage::DEPTH_STENCIL;
+        depthAttachInfo.loadOp      = gfx::LoadOp::LOAD;
+        depthAttachInfo.clearColor  = gfx::Color();
+        depthAttachInfo.endAccesses = {gfx::AccessType::DEPTH_STENCIL_ATTACHMENT_WRITE};
 
-    _clearColors[0].w = camera->clearColor.w;
+        data.depth = builder.write(framegraph::TextureHandle(builder.readFromBlackboard(DeferredPipeline::_depth)), depthAttachInfo);
+        builder.writeToBlackboard(DeferredPipeline::_depth, data.depth);
 
-    gfx::Framebuffer *fb            = camera->window->frameBuffer;
-    const auto &      colorTextures = fb->getColorTextures();
-    gfx::RenderPass * rp            = !colorTextures.empty() && colorTextures[0] ? fb->getRenderPass() : pp->getOrCreateRenderPass(static_cast<gfx::ClearFlags>(camera->clearFlag));
+        // backbuffer is as an attachment
+        framegraph::RenderTargetAttachment::Descriptor colorAttachmentInfo;
+        colorAttachmentInfo.usage       = framegraph::RenderTargetAttachment::Usage::COLOR;
+        colorAttachmentInfo.loadOp      = gfx::LoadOp::DISCARD;
+        colorAttachmentInfo.clearColor  = _clearColors[0];
+        colorAttachmentInfo.endAccesses = {gfx::AccessType::PRESENT};
 
-    cmdBf->beginRenderPass(rp, fb, renderArea, _clearColors, camera->clearDepth, camera->clearStencil);
-    uint const globalOffsets[] = {_pipeline->getPipelineUBO()->getCurrentCameraUBOOffset()};
-    cmdBf->bindDescriptorSet(static_cast<uint>(SetIndex::GLOBAL), pp->getDescriptorSet(), static_cast<uint>(std::size(globalOffsets)), globalOffsets);
+        data.backBuffer = builder.write(framegraph::TextureHandle(builder.readFromBlackboard(DeferredPipeline::_backBuffer)), colorAttachmentInfo);
+        builder.writeToBlackboard(DeferredPipeline::_backBuffer, data.backBuffer);
+    };
 
-    // post proces
-    auto *const  sceneData     = _pipeline->getPipelineSceneData();
-    scene::Pass *pv            = sceneData->getSharedData()->deferredPostPass;
-    gfx::Shader *sd            = sceneData->getSharedData()->deferredPostPassShader;
-    const auto & renderObjects = sceneData->getRenderObjects();
+    auto postExec = [&] (renderData const &data, const framegraph::DevicePassResourceTable &table) {
+        DeferredPipeline *pipeline = static_cast<DeferredPipeline *>(RenderPipeline::getInstance());
+        assert(pipeline != nullptr);
+        gfx::RenderPass *renderPass = table.getDevicePass()->getRenderPass().get();
+        assert(renderPass != nullptr);
 
-    if (!renderObjects.empty()) {
-        gfx::InputAssembler *ia  = pp->getQuadIAOffScreen();
-        gfx::PipelineState * pso = PipelineStateManager::getOrCreatePipelineState(pv, sd, ia, rp);
+        // bind descriptor
+        gfx::Texture *lightingOut    = (gfx::Texture *)(table.getRead(data.lightingOut));
+
+        gfx::SamplerInfo info{
+            gfx::Filter::LINEAR,
+            gfx::Filter::LINEAR,
+            gfx::Filter::NONE,
+            gfx::Address::CLAMP,
+            gfx::Address::CLAMP,
+            gfx::Address::CLAMP,
+        };
+        const auto  samplerHash = SamplerLib::genSamplerHash(info);
+        auto *const sampler     = SamplerLib::getSampler(samplerHash);
+        pipeline->getDescriptorSet()->bindSampler(static_cast<uint>(PipelineGlobalBindings::SAMPLER_LIGHTING_RESULTMAP), sampler);
+        pipeline->getDescriptorSet()->bindTexture(static_cast<uint>(PipelineGlobalBindings::SAMPLER_LIGHTING_RESULTMAP), lightingOut);
+
+        auto *cmdBf = pipeline->getCommandBuffers()[0];
+        uint const globalOffsets[] = {pipeline->getPipelineUBO()->getCurrentCameraUBOOffset()};
+        cmdBf->bindDescriptorSet(static_cast<uint>(SetIndex::GLOBAL), pipeline->getDescriptorSet(), static_cast<uint>(std::size(globalOffsets)), globalOffsets);
+
+        // post proces
+        auto *const  sceneData     = pipeline->getPipelineSceneData();
+        scene::Pass *pv            = sceneData->getSharedData()->deferredPostPass;
+        gfx::Shader *sd            = sceneData->getSharedData()->deferredPostPassShader;
+
+        gfx::InputAssembler *ia = pipeline->getQuadIAOffScreen();
+        gfx::PipelineState * pso = PipelineStateManager::getOrCreatePipelineState(pv, sd, ia, renderPass);
         assert(pso != nullptr);
 
         cmdBf->bindPipelineState(pso);
         cmdBf->bindInputAssembler(ia);
         cmdBf->draw(ia);
-    }
+    };
 
-    _uiPhase->render(camera, rp);
-    cmdBf->endRenderPass();
+    auto *      pipeline      = static_cast<DeferredPipeline *>(_pipeline);
+    pipeline->getFrameGraph().addPass<renderData>(IP_POSTPROCESS, DeferredPipeline::_passPostprocess, postSetup, postExec);
+    pipeline->getFrameGraph().presentFromBlackboard(DeferredPipeline::_backBuffer);
 }
 } // namespace pipeline
 } // namespace cc

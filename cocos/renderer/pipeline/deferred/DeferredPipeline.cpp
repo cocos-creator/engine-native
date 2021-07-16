@@ -26,8 +26,7 @@
 #include "DeferredPipeline.h"
 #include "../SceneCulling.h"
 #include "../shadow/ShadowFlow.h"
-#include "GbufferFlow.h"
-#include "LightingFlow.h"
+#include "MainFlow.h"
 #include "gfx-base/GFXBuffer.h"
 #include "gfx-base/GFXCommandBuffer.h"
 #include "gfx-base/GFXDescriptorSet.h"
@@ -53,42 +52,26 @@ namespace {
     (dst)[(offset) + 3] = (src).w;
 } // namespace
 
-gfx::RenderPass *DeferredPipeline::getOrCreateRenderPass(gfx::ClearFlags clearFlags) {
-    if (_renderPasses.find(clearFlags) != _renderPasses.end()) {
-        return _renderPasses[clearFlags];
-    }
-
-    auto *                      device = gfx::Device::getInstance();
-    gfx::ColorAttachment        colorAttachment;
-    gfx::DepthStencilAttachment depthStencilAttachment;
-    colorAttachment.format                = device->getColorFormat();
-    depthStencilAttachment.format         = device->getDepthStencilFormat();
-    depthStencilAttachment.stencilStoreOp = gfx::StoreOp::DISCARD;
-    depthStencilAttachment.depthStoreOp   = gfx::StoreOp::DISCARD;
-
-    if (!hasFlag(clearFlags, gfx::ClearFlagBit::COLOR)) {
-        if (hasFlag(clearFlags, static_cast<gfx::ClearFlagBit>(skyboxFlag))) {
-            colorAttachment.loadOp = gfx::LoadOp::DISCARD;
-        } else {
-            colorAttachment.loadOp        = gfx::LoadOp::LOAD;
-            colorAttachment.beginAccesses = {gfx::AccessType::PRESENT};
-        }
-    }
-
-    if (static_cast<gfx::ClearFlagBit>(clearFlags & gfx::ClearFlagBit::DEPTH_STENCIL) != gfx::ClearFlagBit::DEPTH_STENCIL) {
-        if (!hasFlag(clearFlags, gfx::ClearFlagBit::DEPTH)) depthStencilAttachment.depthLoadOp = gfx::LoadOp::LOAD;
-        if (!hasFlag(clearFlags, gfx::ClearFlagBit::STENCIL)) depthStencilAttachment.stencilLoadOp = gfx::LoadOp::LOAD;
-        depthStencilAttachment.beginAccesses = {gfx::AccessType::DEPTH_STENCIL_ATTACHMENT_WRITE};
-    }
-
-    auto *renderPass          = device->createRenderPass({
-        {colorAttachment},
-        depthStencilAttachment,
-    });
-    _renderPasses[clearFlags] = renderPass;
-
-    return renderPass;
+void srgbToLinear(gfx::Color *out, const gfx::Color &gamma) {
+    out->x = gamma.x * gamma.x;
+    out->y = gamma.y * gamma.y;
+    out->z = gamma.z * gamma.z;
 }
+
+framegraph::StringHandle DeferredPipeline::_gbuffer[4] = {
+    framegraph::FrameGraph::stringToHandle("gbufferAlbedo"),
+    framegraph::FrameGraph::stringToHandle("gbufferPosition"),
+    framegraph::FrameGraph::stringToHandle("gbufferNormal"),
+    framegraph::FrameGraph::stringToHandle("gbufferEmissive")
+};
+framegraph::StringHandle DeferredPipeline::_depth = framegraph::FrameGraph::stringToHandle("depth");
+framegraph::StringHandle DeferredPipeline::_lightingOut = framegraph::FrameGraph::stringToHandle("lightingOutput");
+framegraph::StringHandle DeferredPipeline::_backBuffer = framegraph::FrameGraph::stringToHandle("backBuffer");
+
+framegraph::StringHandle DeferredPipeline::_passGbuffer = framegraph::FrameGraph::stringToHandle("deferredGbufferPass");
+framegraph::StringHandle DeferredPipeline::_passLighting = framegraph::FrameGraph::stringToHandle("deferredLightingPass");
+framegraph::StringHandle DeferredPipeline::_passSspr = framegraph::FrameGraph::stringToHandle("deferredSSPRPass");
+framegraph::StringHandle DeferredPipeline::_passPostprocess = framegraph::FrameGraph::stringToHandle("deferredPostPass");
 
 bool DeferredPipeline::initialize(const RenderPipelineInfo &info) {
     RenderPipeline::initialize(info);
@@ -98,13 +81,9 @@ bool DeferredPipeline::initialize(const RenderPipelineInfo &info) {
         shadowFlow->initialize(ShadowFlow::getInitializeInfo());
         _flows.emplace_back(shadowFlow);
 
-        auto *gbufferFlow = CC_NEW(GbufferFlow);
-        gbufferFlow->initialize(GbufferFlow::getInitializeInfo());
-        _flows.emplace_back(gbufferFlow);
-
-        auto *lightingFlow = CC_NEW(LightingFlow);
-        lightingFlow->initialize(LightingFlow::getInitializeInfo());
-        _flows.emplace_back(lightingFlow);
+        auto *mainFlow = CC_NEW(MainFlow);
+        mainFlow->initialize(MainFlow::getInitializeInfo());
+        _flows.emplace_back(mainFlow);
     }
 
     return true;
@@ -126,17 +105,29 @@ bool DeferredPipeline::activate() {
     return true;
 }
 
+void DeferredPipeline::prepareFrameGraph() {
+    // repare for the backbuffer
+    _fg.getBlackboard().put(_backBuffer, _fg.importExternal(_backBuffer, _fgBackBuffer));
+}
+
 void DeferredPipeline::render(const vector<scene::Camera *> &cameras) {
     _commandBuffers[0]->begin();
     _pipelineUBO->updateGlobalUBO();
     _pipelineUBO->updateMultiCameraUBO(cameras);
     for (auto *camera : cameras) {
+        _fg.reset();
+        prepareFrameGraph();
         sceneCulling(this, camera);
         for (auto *const flow : _flows) {
             flow->render(camera);
         }
+
+        _fg.compile();
+        _fg.exportGraphViz("fg_vis.dot");
+        _fg.execute();
         _pipelineUBO->incCameraUBOOffset();
     }
+
     _commandBuffers[0]->end();
     _device->flushCommands(_commandBuffers);
     _device->getQueue()->submit(_commandBuffers);
@@ -221,7 +212,6 @@ bool DeferredPipeline::createQuadInputAssembler(gfx::Buffer **quadIB, gfx::Buffe
 
 gfx::Rect DeferredPipeline::getRenderArea(scene::Camera *camera) {
     gfx::Rect renderArea;
-    
     uint w = camera->window->hasOnScreenAttachments && static_cast<uint>(_device->getSurfaceTransform()) % 2 ? camera->height : camera->width;
     uint h = camera->window->hasOnScreenAttachments && static_cast<uint>(_device->getSurfaceTransform()) % 2 ? camera->width : camera->height;
 
@@ -287,72 +277,8 @@ bool DeferredPipeline::activeRenderer() {
         return false;
     }
 
-    gfx::RenderPassInfo gbufferPass;
-
-    gfx::ColorAttachment color = {
-        gfx::Format::RGBA16F,
-        gfx::SampleCount::X1,
-        gfx::LoadOp::CLEAR,
-        gfx::StoreOp::STORE,
-        {},
-        {gfx::AccessType::COLOR_ATTACHMENT_WRITE},
-    };
-
-    for (int i = 0; i < 4; i++) {
-        gbufferPass.colorAttachments.push_back(color);
-    }
-
-    gfx::DepthStencilAttachment depth = {
-        _device->getDepthStencilFormat(),
-        gfx::SampleCount::X1,
-        gfx::LoadOp::CLEAR,
-        gfx::StoreOp::STORE,
-        gfx::LoadOp::CLEAR,
-        gfx::StoreOp::STORE,
-    };
-
-    gbufferPass.depthStencilAttachment = depth;
-    _gbufferRenderPass                 = _device->createRenderPass(gbufferPass);
-
-    gfx::ColorAttachment cAttch = {
-        gfx::Format::RGBA8,
-        gfx::SampleCount::X1,
-        gfx::LoadOp::CLEAR,
-        gfx::StoreOp::STORE,
-        {},
-        {gfx::AccessType::FRAGMENT_SHADER_READ_TEXTURE},
-    };
-
-    gfx::RenderPassInfo lightPass;
-    lightPass.colorAttachments.push_back(cAttch);
-
-    lightPass.depthStencilAttachment = {
-        _device->getDepthStencilFormat(),
-        gfx::SampleCount::X1,
-        gfx::LoadOp::LOAD,
-        gfx::StoreOp::DISCARD,
-        gfx::LoadOp::DISCARD,
-        gfx::StoreOp::DISCARD,
-        {gfx::AccessType::DEPTH_STENCIL_ATTACHMENT_WRITE},
-    };
-
-    _lightingRenderPass = _device->createRenderPass(lightPass);
-
     _width  = _device->getWidth();
     _height = _device->getHeight();
-
-    generateDeferredRenderData();
-
-    _descriptorSet->bindSampler(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_GBUFFER_ALBEDOMAP), sampler);
-    _descriptorSet->bindSampler(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_GBUFFER_POSITIONMAP), sampler);
-    _descriptorSet->bindSampler(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_GBUFFER_NORMALMAP), sampler);
-    _descriptorSet->bindSampler(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_GBUFFER_EMISSIVEMAP), sampler);
-    _descriptorSet->bindSampler(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_LIGHTING_RESULTMAP), sampler);
 
     return true;
 }
@@ -364,63 +290,6 @@ void DeferredPipeline::resize(uint width, uint height) {
     _width  = width;
     _height = height;
     destroyDeferredData();
-    generateDeferredRenderData();
-}
-
-void DeferredPipeline::generateDeferredRenderData() {
-    _deferredRenderData = CC_NEW(DeferredRenderData);
-
-    gfx::TextureInfo info = {
-        gfx::TextureType::TEX2D,
-        gfx::TextureUsageBit::COLOR_ATTACHMENT | gfx::TextureUsageBit::SAMPLED,
-        gfx::Format::RGBA16F,
-        _width,
-        _height,
-    };
-
-    for (int i = 0; i < 4; i++) {
-        gfx::Texture *tex = _device->createTexture(info);
-        _deferredRenderData->gbufferRenderTargets.push_back(tex);
-    }
-
-    info.usage                    = gfx::TextureUsageBit::DEPTH_STENCIL_ATTACHMENT;
-    info.format                   = _device->getDepthStencilFormat();
-    _deferredRenderData->depthTex = _device->createTexture(info);
-
-    gfx::FramebufferInfo gbufferInfo = {
-        _gbufferRenderPass,
-        _deferredRenderData->gbufferRenderTargets,
-        _deferredRenderData->depthTex,
-    };
-
-    _deferredRenderData->gbufferFrameBuffer = _device->createFramebuffer(gbufferInfo);
-
-    gfx::TextureInfo rtInfo = {
-        gfx::TextureType::TEX2D,
-        gfx::TextureUsageBit::COLOR_ATTACHMENT | gfx::TextureUsageBit::SAMPLED,
-        gfx::Format::RGBA16F,
-        _width,
-        _height,
-    };
-    _deferredRenderData->lightingRenderTarget = _device->createTexture(rtInfo);
-
-    gfx::FramebufferInfo lightingInfo;
-    lightingInfo.renderPass = _lightingRenderPass;
-    lightingInfo.colorTextures.push_back(_deferredRenderData->lightingRenderTarget);
-    lightingInfo.depthStencilTexture       = _deferredRenderData->depthTex;
-    _deferredRenderData->lightingFrameBuff = _device->createFramebuffer(lightingInfo);
-
-    _descriptorSet->bindTexture(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_GBUFFER_ALBEDOMAP), _deferredRenderData->gbufferFrameBuffer->getColorTextures()[0]);
-    _descriptorSet->bindTexture(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_GBUFFER_POSITIONMAP), _deferredRenderData->gbufferFrameBuffer->getColorTextures()[1]);
-    _descriptorSet->bindTexture(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_GBUFFER_NORMALMAP), _deferredRenderData->gbufferFrameBuffer->getColorTextures()[2]);
-    _descriptorSet->bindTexture(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_GBUFFER_EMISSIVEMAP), _deferredRenderData->gbufferFrameBuffer->getColorTextures()[3]);
-
-    _descriptorSet->bindTexture(
-        static_cast<uint>(PipelineGlobalBindings::SAMPLER_LIGHTING_RESULTMAP), _deferredRenderData->lightingFrameBuff->getColorTextures()[0]);
 }
 
 void DeferredPipeline::destroy() {
@@ -450,38 +319,26 @@ void DeferredPipeline::destroy() {
 }
 
 void DeferredPipeline::destroyDeferredData() {
-    if (_deferredRenderData->gbufferFrameBuffer) {
-        _deferredRenderData->gbufferFrameBuffer->destroy();
-        CC_DELETE(_deferredRenderData->gbufferFrameBuffer);
-        _deferredRenderData->gbufferFrameBuffer = nullptr;
+}
+
+gfx::Color DeferredPipeline::getClearcolor(scene::Camera *camera) {
+    auto *const sceneData     = getPipelineSceneData();
+    auto *const sharedData    = sceneData->getSharedData();
+    gfx::Color clearColor = {0.0, 0.0, 0.0, 1.0};
+    if (camera->clearFlag & static_cast<uint>(gfx::ClearFlagBit::COLOR)) {
+        if (sharedData->isHDR) {
+            srgbToLinear(&clearColor, camera->clearColor);
+            const auto scale = sharedData->fpScale / camera->exposure;
+            clearColor.x *= scale;
+            clearColor.y *= scale;
+            clearColor.z *= scale;
+        } else {
+            clearColor = camera->clearColor;
+        }
     }
 
-    if (_deferredRenderData->lightingFrameBuff) {
-        _deferredRenderData->lightingFrameBuff->destroy();
-        CC_DELETE(_deferredRenderData->lightingFrameBuff);
-        _deferredRenderData->lightingFrameBuff = nullptr;
-    }
-
-    if (_deferredRenderData->lightingRenderTarget) {
-        _deferredRenderData->lightingRenderTarget->destroy();
-        CC_DELETE(_deferredRenderData->lightingRenderTarget);
-        _deferredRenderData->lightingRenderTarget = nullptr;
-    }
-
-    if (_deferredRenderData->depthTex) {
-        _deferredRenderData->depthTex->destroy();
-        CC_DELETE(_deferredRenderData->depthTex);
-        _deferredRenderData->depthTex = nullptr;
-    }
-
-    for (auto *renderTarget : _deferredRenderData->gbufferRenderTargets) {
-        renderTarget->destroy();
-        CC_DELETE(renderTarget);
-    }
-    _deferredRenderData->gbufferRenderTargets.clear();
-
-    CC_DELETE(_deferredRenderData);
-    _deferredRenderData = nullptr;
+    clearColor.w = 0;
+    return clearColor;
 }
 
 } // namespace pipeline
