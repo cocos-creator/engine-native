@@ -121,7 +121,7 @@ void DeviceValidator::acquire(Swapchain *const *swapchains, uint32_t count) {
     swapchainActors.resize(count);
 
     for (uint i = 0U; i < count; ++i) {
-        auto *swapchain = static_cast<SwapchainValidator *>(swapchains[i]);
+        auto *swapchain    = static_cast<SwapchainValidator *>(swapchains[i]);
         swapchainActors[i] = swapchain->getActor();
     }
 

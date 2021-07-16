@@ -372,7 +372,8 @@ bool CCVKDevice::doInit(const DeviceInfo & /*info*/) {
     gpuTransportHub()->checkIn(
         [&barrier](const CCVKGPUCommandBuffer *gpuCommandBuffer) {
             cmdFuncCCVKImageMemoryBarrier(gpuCommandBuffer, barrier);
-        }, true);
+        },
+        true);
 
     _gpuDevice->defaultBuffer.usage    = BufferUsage::UNIFORM;
     _gpuDevice->defaultBuffer.memUsage = MemoryUsage::HOST | MemoryUsage::DEVICE;
@@ -539,7 +540,6 @@ void CCVKDevice::acquire(Swapchain *const *swapchains, uint32_t count) {
         CCASSERT(_gpuDevice->curBackBufferIndex == vkSwapchainIndices[i], "wrong image index?");
 #endif // defined(VK_USE_PLATFORM_METAL_EXT)
     }
-
 }
 
 void CCVKDevice::present() {

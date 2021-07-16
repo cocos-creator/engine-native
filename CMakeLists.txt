@@ -1153,14 +1153,13 @@ if(CC_USE_VULKAN)
                      cocos/renderer/gfx-vulkan/VKCommandBuffer.h
                      cocos/renderer/gfx-vulkan/VKCommands.cpp
                      cocos/renderer/gfx-vulkan/VKCommands.h
-                     cocos/renderer/gfx-vulkan/VKContext.cpp
-                     cocos/renderer/gfx-vulkan/VKContext.h
                      cocos/renderer/gfx-vulkan/VKDevice.cpp
                      cocos/renderer/gfx-vulkan/VKDevice.h
                      cocos/renderer/gfx-vulkan/VKFramebuffer.cpp
                      cocos/renderer/gfx-vulkan/VKFramebuffer.h
                      cocos/renderer/gfx-vulkan/VKGlobalBarrier.cpp
                      cocos/renderer/gfx-vulkan/VKGlobalBarrier.h
+                     cocos/renderer/gfx-vulkan/VKGPUContext.cpp
                      cocos/renderer/gfx-vulkan/VKGPUObjects.h
                      cocos/renderer/gfx-vulkan/VKInputAssembler.cpp
                      cocos/renderer/gfx-vulkan/VKInputAssembler.h
@@ -1183,6 +1182,8 @@ if(CC_USE_VULKAN)
                      cocos/renderer/gfx-vulkan/VKSPIRV.h
                      cocos/renderer/gfx-vulkan/VKStd.cpp
                      cocos/renderer/gfx-vulkan/VKStd.h
+                     cocos/renderer/gfx-vulkan/VKSwapchain.cpp
+                     cocos/renderer/gfx-vulkan/VKSwapchain.h
                      cocos/renderer/gfx-vulkan/VKTexture.cpp
                      cocos/renderer/gfx-vulkan/VKTexture.h
                      cocos/renderer/gfx-vulkan/VKTextureBarrier.cpp

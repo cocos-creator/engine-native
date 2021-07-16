@@ -23,15 +23,15 @@
  THE SOFTWARE.
 ****************************************************************************/
 
-#include "base/CoreStd.h"
 #include "EmptySwapchain.h"
 #include "EmptyTexture.h"
+#include "base/CoreStd.h"
 
 namespace cc {
 namespace gfx {
 
 void EmptySwapchain::doInit(const SwapchainInfo &info) {
-    _colorTexture = CC_NEW(EmptyTexture);
+    _colorTexture        = CC_NEW(EmptyTexture);
     _depthStencilTexture = CC_NEW(EmptyTexture);
 
     SwapchainTextureInfo textureInfo;
