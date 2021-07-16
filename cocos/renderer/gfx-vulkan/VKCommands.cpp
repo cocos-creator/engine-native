@@ -404,6 +404,8 @@ void cmdFuncCCVKCreateRenderPass(CCVKDevice *device, CCVKGPURenderPass *gpuRende
         }
         gpuRenderPass->sampleCounts.push_back(sampleCount);
 
+        gpuRenderPass->sampleCounts.push_back(sampleCount);
+
         if (subpassInfo.depthStencilResolve != INVALID_BINDING) {
             const ColorAttachment &desc = gpuRenderPass->colorAttachments[subpassInfo.depthStencilResolve];
 

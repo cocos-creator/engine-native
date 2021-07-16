@@ -113,7 +113,9 @@ void DeviceAgent::doDestroy() {
 
 void DeviceAgent::acquire(Swapchain *const *swapchains, uint32_t count) {
     auto *actorSwapchains = _mainMessageQueue->allocate<Swapchain *>(count);
-    memcpy(actorSwapchains, swapchains, count * sizeof(void *));
+    for (uint32_t i = 0; i < count; ++i) {
+        actorSwapchains[i] = static_cast<SwapchainAgent *>(swapchains[i])->getActor();
+    }
 
     ENQUEUE_MESSAGE_3(
         _mainMessageQueue, DevicePresent,

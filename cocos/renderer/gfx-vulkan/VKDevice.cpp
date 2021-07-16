@@ -372,7 +372,7 @@ bool CCVKDevice::doInit(const DeviceInfo & /*info*/) {
     gpuTransportHub()->checkIn(
         [&barrier](const CCVKGPUCommandBuffer *gpuCommandBuffer) {
             cmdFuncCCVKImageMemoryBarrier(gpuCommandBuffer, barrier);
-        });
+        }, true);
 
     _gpuDevice->defaultBuffer.usage    = BufferUsage::UNIFORM;
     _gpuDevice->defaultBuffer.memUsage = MemoryUsage::HOST | MemoryUsage::DEVICE;
