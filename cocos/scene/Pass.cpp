@@ -29,11 +29,13 @@ namespace cc {
 namespace scene {
 
 void Pass::update() {
-    if (_rootBufferDirty && _rootBuffer) {
+    if (_passLayout->rootBufferDirty && _rootBuffer) {
         _rootBuffer->update(_rootBlock, _rootBuffer->getSize());
-        _rootBufferDirty = false;
+        _passLayout->rootBufferDirty = 0;
     }
-    _descriptorSet->update();
+
+    auto *descriptorSet = GET_DESCRIPTOR_SET(_passLayout->descriptorSet);
+    descriptorSet->update();
 }
 
 void Pass::initWithData(uint8_t *data) {
@@ -44,7 +46,7 @@ void Pass::setState(gfx::BlendState *bs, gfx::DepthStencilState *ds, gfx::Raster
     _blendState        = bs;
     _depthStencilState = ds;
     _rasterizerState   = rs;
-    _descriptorSet = descriptorSet;
+    _descriptorSet     = descriptorSet;
 }
 
 } // namespace scene

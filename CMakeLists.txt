@@ -924,6 +924,7 @@ cocos_source_files(
                  cocos/renderer/pipeline/shadow/ShadowStage.h
                  cocos/renderer/pipeline/helper/DefineMap.h
                  cocos/renderer/pipeline/helper/DefineMap.cpp
+                 cocos/renderer/pipeline/helper/SharedMemory.h
 )
 
 ##### scene
@@ -938,6 +939,7 @@ cocos_source_files(
                  cocos/scene/DirectionalLight.h
                  cocos/scene/DirectionalLight.cpp
                  cocos/scene/DrawBatch2D.h
+                 cocos/scene/DrawBatch2D.cpp
                  cocos/scene/Frustum.h
                  cocos/scene/Frustum.cpp
                  cocos/scene/Light.h
@@ -1295,6 +1297,8 @@ endif()
 cocos_source_files(
     NO_WERROR    cocos/bindings/dop/BufferPool.cpp
                  cocos/bindings/dop/BufferPool.h
+    NO_WERROR    cocos/bindings/dop/ObjectPool.cpp
+                 cocos/bindings/dop/ObjectPool.h
     NO_WERROR    cocos/bindings/dop/jsb_dop.cpp
                  cocos/bindings/dop/jsb_dop.h
                  cocos/bindings/dop/PoolType.h

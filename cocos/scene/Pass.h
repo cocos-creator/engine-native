@@ -30,6 +30,7 @@
 #include "renderer/gfx-base/GFXDef-common.h"
 #include "renderer/gfx-base/GFXDescriptorSet.h"
 #include "scene/Define.h"
+#include "renderer/pipeline/helper/SharedMemory.h"
 
 namespace cc {
 namespace scene {
@@ -44,6 +45,11 @@ struct PassLayout {
     gfx::DynamicStateFlagBit dynamicState{gfx::DynamicStateFlagBit::NONE};
     // FIXME: is uint32_t enough?
     uint32_t hash{0};
+    uint32_t rootBufferDirty{0};
+    uint32_t descriptorSet{0};
+    uint32_t blendState{0};
+    uint32_t depthStencilState{0};
+    uint32_t rasterizerState{0};
 };
 
 class Pass final {
@@ -55,10 +61,10 @@ public:
     Pass &operator=(const Pass &) = delete;
     Pass &operator=(Pass &&) = delete;
 
-    void initWithData(uint8_t *data);
-    void update();
-    void setState(gfx::BlendState *bs, gfx::DepthStencilState *ds, gfx::RasterizerState *rs, gfx::DescriptorSet *descriptorSet);
-
+    void  initWithData(uint8_t *data);
+    void  update();
+    void  setState(gfx::BlendState *bs, gfx::DepthStencilState *ds, gfx::RasterizerState *rs, gfx::DescriptorSet *descriptorSet);
+    
     inline void setBatchingScheme(BatchingSchemes value) { _passLayout->batchingScheme = value; }
     inline void setBlendState(gfx::BlendState *blendState) { _blendState = blendState; }
     inline void setDepthStencilState(gfx::DepthStencilState *state) { _depthStencilState = state; }
@@ -78,16 +84,16 @@ public:
     inline void setRootBufferDirty(bool val) { _rootBufferDirty = val; }
 
     inline BatchingSchemes          getBatchingScheme() const { return _passLayout->batchingScheme; }
-    inline gfx::BlendState *        getBlendState() const { return _blendState; }
-    inline gfx::DepthStencilState * getDepthStencilState() const { return _depthStencilState; }
-    inline gfx::DescriptorSet *     getDescriptorSet() const { return _descriptorSet; }
+    inline gfx::BlendState *        getBlendState() const { return GET_BLEND_STATE(_passLayout->blendState); }
+    inline gfx::DepthStencilState * getDepthStencilState() const { return GET_DEPTH_STENCIL_STATE(_passLayout->depthStencilState); }
+    inline gfx::DescriptorSet *     getDescriptorSet() const { return GET_DESCRIPTOR_SET(_passLayout->descriptorSet); }
     inline gfx::DynamicStateFlagBit getDynamicState() const { return _passLayout->dynamicState; }
     inline uint32_t                 getHash() const { return _passLayout->hash; }
     inline uint32_t                 getPhase() const { return _passLayout->phase; }
     inline gfx::PipelineLayout *    getPipelineLayout() const { return _pipelineLayout; }
     inline gfx::PrimitiveMode       getPrimitive() const { return _passLayout->primitive; }
     inline RenderPriority           getPriority() const { return _passLayout->priority; }
-    inline gfx::RasterizerState *   getRasterizerState() const { return _rasterizerState; }
+    inline gfx::RasterizerState *   getRasterizerState() const { return GET_RASTERIZER_STATE(_passLayout->rasterizerState); }
     inline RenderPassStage          getStage() const { return _passLayout->stage; }
 
 private:
@@ -99,7 +105,7 @@ private:
     gfx::DescriptorSet *    _descriptorSet{nullptr};
     gfx::PipelineLayout *   _pipelineLayout{nullptr};
     gfx::Buffer *           _rootBuffer{nullptr};
-    uint8_t *                _rootBlock{nullptr};
+    uint8_t *               _rootBlock{nullptr};
 };
 
 } // namespace scene

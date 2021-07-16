@@ -1,8 +1,8 @@
 /****************************************************************************
- Copyright (c) 2020-2021 Xiamen Yaji Software Co., Ltd.
-
+ Copyright (c) 2021 Xiamen Yaji Software Co., Ltd.
+ 
  http://www.cocos.com
-
+ 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
  worldwide, royalty-free, non-assignable, revocable and non-exclusive license
@@ -10,10 +10,10 @@
  not use Cocos Creator software for developing other software or tools that's
  used for developing games. You are not granted to publish, distribute,
  sublicense, and/or sell copies of Cocos Creator.
-
+ 
  The software or tools in this License Agreement are licensed, not sold.
  Xiamen Yaji Software Co., Ltd. reserves all rights not expressly granted to you.
-
+ 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,33 +21,16 @@
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
-****************************************************************************/
+ ****************************************************************************/
 
-#pragma once
+#include "DrawBatch2D.h"
 
-namespace se {
+namespace cc {
+namespace scene {
 
-#define CAST_POOL_TYPE(type)     static_cast<uint>(type)
-#define GET_BUFFER_POOL_ID(type) CAST_POOL_TYPE(type)
-#define OBJECT_POOL_SIZE         CAST_POOL_TYPE(se::ObjectPoolType::UNKNOWN)
-#define GET_OBJECT_POOL_ID(type) CAST_POOL_TYPE(type)
-
-enum class PoolType {
-    // Buffers
-    NODE,
-    UNKNOWN
+void DrawBatch2D::initWithData(uint8_t *data) {
+    _batchLayout = reinterpret_cast<DrawBatch2DLayout*>(data);
 };
 
-enum class ObjectPoolType {
-    PASS,
-    SHADER,
-    INPUT_ASSEMBLER,
-    DESCRIPTOR_SET,
-    BLEND_STATE,
-    DEPTH_STENCIL_STATE,
-    RASTERIZER_STATE,
-
-    UNKNOWN
-};
-
-} // namespace se
+}
+}

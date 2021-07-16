@@ -26,20 +26,45 @@
 #pragma once
 
 #include <vector>
+#include "renderer/pipeline/helper/SharedMemory.h"
 #include "renderer/gfx-base/GFXDescriptorSet.h"
 #include "renderer/gfx-base/GFXInputAssembler.h"
 
 namespace cc {
+
 namespace scene {
 
 class Pass;
 
-struct DrawBatch2D final {
-    uint32_t                   visFlags{0};
-    gfx::DescriptorSet *       descriptorSet{nullptr};
-    gfx::InputAssembler *      inputAssembler{nullptr};
-    std::vector<Pass *>        passes;
-    std::vector<gfx::Shader *> shaders;
+struct DrawBatch2DLayout final {
+    uint32_t visFlags{0};
+    uint32_t passCount{0};
+    uint32_t descriptorSet{0U};
+    uint32_t inputAssembler{0U};
+    uint32_t passes[8];
+    uint32_t shaders[8];
+};
+
+class DrawBatch2D final {
+public:
+    DrawBatch2D()                    = default;
+    DrawBatch2D(const DrawBatch2D &) = delete;
+    DrawBatch2D(DrawBatch2D &&)      = delete;
+    ~DrawBatch2D()                   = default;
+    DrawBatch2D &operator=(const DrawBatch2D &) = delete;
+    DrawBatch2D &operator=(DrawBatch2D &&) = delete;
+
+    inline uint32_t             getVisFlags() const { return static_cast<uint32_t>(_batchLayout->visFlags); }
+    inline gfx::DescriptorSet * getDescriptorSet() const { return GET_DESCRIPTOR_SET(_batchLayout->descriptorSet); }
+    inline gfx::InputAssembler *getInputAssembler() const { return GET_IA(_batchLayout->inputAssembler); }
+    inline uint8_t              getPassesCount() const { return _batchLayout->passCount; }
+    inline Pass *               getPass(uint8_t index) const { return GET_PASS(_batchLayout->passes[index]);}
+    inline gfx::Shader *getShader(uint8_t index) const { return GET_SHADER(_batchLayout->shaders[index]); }
+
+    void initWithData(uint8_t *data);
+
+private:
+    DrawBatch2DLayout *_batchLayout{nullptr};
 };
 
 } // namespace scene

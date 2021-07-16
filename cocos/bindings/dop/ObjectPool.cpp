@@ -23,31 +23,33 @@
  THE SOFTWARE.
 ****************************************************************************/
 
-#pragma once
+#include "ObjectPool.h"
+#include "base/Macros.h"
+#include "base/memory/Memory.h"
 
 namespace se {
+cc::vector<ObjectPool *> ObjectPool::poolMap(OBJECT_POOL_SIZE);
 
-#define CAST_POOL_TYPE(type)     static_cast<uint>(type)
-#define GET_BUFFER_POOL_ID(type) CAST_POOL_TYPE(type)
-#define OBJECT_POOL_SIZE         CAST_POOL_TYPE(se::ObjectPoolType::UNKNOWN)
-#define GET_OBJECT_POOL_ID(type) CAST_POOL_TYPE(type)
+ObjectPool::ObjectPool(ObjectPoolType type, Object *jsArr)
+: _type(type),
+  _jsArr(jsArr) {
+    CCASSERT(jsArr->isArray(), "ObjectPool: It must be initialized with a JavaScript array");
 
-enum class PoolType {
-    // Buffers
-    NODE,
-    UNKNOWN
-};
+    _jsArr->incRef();
+    _indexMask                                    = 0xffffffff & ~_poolFlag;
+    ObjectPool::poolMap[GET_OBJECT_POOL_ID(type)] = this;
+}
 
-enum class ObjectPoolType {
-    PASS,
-    SHADER,
-    INPUT_ASSEMBLER,
-    DESCRIPTOR_SET,
-    BLEND_STATE,
-    DEPTH_STENCIL_STATE,
-    RASTERIZER_STATE,
+ObjectPool::~ObjectPool() {
+    _jsArr->decRef();
+    _array.clear();
+}
 
-    UNKNOWN
-};
-
+void ObjectPool::bind(uint id, Object *obj) {
+    if (id >= _array.size()) {
+        _array.push_back(obj);
+    } else {
+        _array[id] = obj;
+    }
+}
 } // namespace se

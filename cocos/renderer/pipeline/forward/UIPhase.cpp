@@ -43,18 +43,19 @@ void UIPhase::render(scene::Camera *camera, gfx::RenderPass *renderPass) {
     // Notice: The batches[0] is batchCount
     for (auto *batch : batches) {
         bool visible = false;
-        if (camera->visibility & batch->visFlags) {
+        if (camera->visibility & batch->getVisFlags()) {
             visible = true;
         }
 
         if (!visible) continue;
-        int i = 0;
-        for (const auto *pass : batch->passes) {
+        auto  count          = batch->getPassesCount();
+        auto *inputAssembler = batch->getInputAssembler();
+        auto *ds             = batch->getDescriptorSet();
+        for (uint8_t i = 0; i < count; ++i) {
+            auto *pass   = batch->getPass(i);
+            auto *shader = batch->getShader(i);
             if (pass->getPhase() != _phaseID) continue;
-            auto *const shader         = batch->shaders[i];
-            auto *const inputAssembler = batch->inputAssembler;
-            auto *const ds             = batch->descriptorSet;
-            auto *      pso            = cc::pipeline::PipelineStateManager::getOrCreatePipelineState(pass, shader, inputAssembler, renderPass);
+            auto *pso = cc::pipeline::PipelineStateManager::getOrCreatePipelineState(pass, shader, inputAssembler, renderPass);
             cmdBuff->bindPipelineState(pso);
             cmdBuff->bindDescriptorSet(materialSet, pass->getDescriptorSet());
             cmdBuff->bindDescriptorSet(localSet, ds);

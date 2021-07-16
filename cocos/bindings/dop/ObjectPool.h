@@ -25,29 +25,43 @@
 
 #pragma once
 
+#include "PoolType.h"
+#include "cocos/base/Macros.h"
+#include "cocos/base/Object.h"
+#include "cocos/base/TypeDef.h"
+#include "cocos/base/memory/StlAlloc.h"
+#include "cocos/bindings/jswrapper/Object.h"
+
 namespace se {
 
-#define CAST_POOL_TYPE(type)     static_cast<uint>(type)
-#define GET_BUFFER_POOL_ID(type) CAST_POOL_TYPE(type)
-#define OBJECT_POOL_SIZE         CAST_POOL_TYPE(se::ObjectPoolType::UNKNOWN)
-#define GET_OBJECT_POOL_ID(type) CAST_POOL_TYPE(type)
+class CC_DLL ObjectPool final : public cc::Object {
+public:
+    inline static const cc::vector<ObjectPool *> &getPoolMap() { return ObjectPool::poolMap; }
 
-enum class PoolType {
-    // Buffers
-    NODE,
-    UNKNOWN
-};
+    ObjectPool(ObjectPoolType type, Object *jsArr);
+    ~ObjectPool() override;
 
-enum class ObjectPoolType {
-    PASS,
-    SHADER,
-    INPUT_ASSEMBLER,
-    DESCRIPTOR_SET,
-    BLEND_STATE,
-    DEPTH_STENCIL_STATE,
-    RASTERIZER_STATE,
+    template <class Type>
+    Type *getTypedObject(uint id) const {
+        id = _indexMask & id;
 
-    UNKNOWN
+#ifdef CC_DEBUG
+        CCASSERT(id < _array.size(), "ObjectPool: Invalid buffer pool entry id");
+#endif
+
+        return static_cast<Type *>(_array[id]->getPrivateData());
+    }
+
+    void bind(uint id, Object *);
+
+private:
+    static cc::vector<ObjectPool *> poolMap;
+
+    cc::vector<Object *> _array;
+    ObjectPoolType       _type      = ObjectPoolType::PASS;
+    Object *             _jsArr     = nullptr;
+    uint                 _poolFlag  = 1 << 29;
+    uint                 _indexMask = 0;
 };
 
 } // namespace se
