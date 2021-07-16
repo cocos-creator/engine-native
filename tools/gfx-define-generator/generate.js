@@ -133,7 +133,10 @@ const replaceConstants = (() => {
     const constexprRE = /constexpr\s+\w+\s+(\w+)\s*=\s*(.*);/g;
     let constexprCap = constexprRE.exec(header);
     while (constexprCap) {
-        strMap[constexprCap[1]] = constexprCap[2].replace('~0', '-1');
+        let val = constexprCap[2];
+        if (val.endsWith('U')) { val = val.slice(0, -1); }
+        val = val.replace('~0', '-1');
+        strMap[constexprCap[1]] = val;
         constexprCap = constexprRE.exec(header);
     }
     const constantsRE = new RegExp(Object.keys(strMap).reduce((acc, cur) => `${acc}|${cur}`, '').slice(1), 'g');

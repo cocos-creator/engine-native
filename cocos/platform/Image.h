@@ -28,14 +28,11 @@
 #pragma once
 
 #include "base/Ref.h"
+#include "gfx-base/GFXDef.h"
 #include <string>
 #include <map>
 
 namespace cc {
-
-namespace gfx {
-enum class Format;
-} // namespace gfx
 
 class Image : public Ref {
 public:

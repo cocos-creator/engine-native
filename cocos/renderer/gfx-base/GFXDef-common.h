@@ -74,9 +74,9 @@ using TextureBarrierList = vector<TextureBarrier *>;
 using BufferDataList     = vector<const uint8_t *>;
 using CommandBufferList  = vector<CommandBuffer *>;
 
-constexpr uint32_t MAX_ATTACHMENTS  = 4;
-constexpr uint32_t INVALID_BINDING  = ~0;
-constexpr uint32_t SUBPASS_EXTERNAL = ~0;
+constexpr uint32_t MAX_ATTACHMENTS  = 4U;
+constexpr uint32_t INVALID_BINDING  = ~0U;
+constexpr uint32_t SUBPASS_EXTERNAL = ~0U;
 
 using BufferList              = vector<Buffer *>;
 using TextureList             = vector<Texture *>;
@@ -1179,7 +1179,7 @@ using TextureBarrierInfoList = vector<TextureBarrierInfo>;
 
 struct FramebufferInfo {
     RenderPass *renderPass = nullptr;
-    TextureList colorTextures;                 // @ts-overrides { type: '(Texture | null)[]' }
+    TextureList colorTextures;
     Texture *   depthStencilTexture = nullptr; // @ts-nullable
 };
 
