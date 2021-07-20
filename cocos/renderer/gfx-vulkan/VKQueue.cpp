@@ -82,10 +82,10 @@ void CCVKQueue::submit(CommandBuffer *const *cmdBuffs, uint count) {
     VkSemaphore signal = device->gpuSemaphorePool()->alloc();
 
     VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
-    submitInfo.waitSemaphoreCount   = _gpuQueue->lastSignaledSemaphores.size();
+    submitInfo.waitSemaphoreCount   = utils::toUint(_gpuQueue->lastSignaledSemaphores.size());
     submitInfo.pWaitSemaphores      = _gpuQueue->lastSignaledSemaphores.data();
     submitInfo.pWaitDstStageMask    = &_gpuQueue->submitStageMask;
-    submitInfo.commandBufferCount   = _gpuQueue->commandBuffers.size();
+    submitInfo.commandBufferCount   = utils::toUint(_gpuQueue->commandBuffers.size());
     submitInfo.pCommandBuffers      = &_gpuQueue->commandBuffers[0];
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores    = &signal;

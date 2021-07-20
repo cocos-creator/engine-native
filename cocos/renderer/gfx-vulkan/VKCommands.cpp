@@ -107,15 +107,16 @@ void cmdFuncCCVKCreateTexture(CCVKDevice *device, CCVKGPUTexture *gpuTexture) {
     if (!gpuTexture->size) return;
 
     gpuTexture->aspectMask = mapVkImageAspectFlags(gpuTexture->format);
-
+    // storage images has to be in general layout
+    if (hasFlag(gpuTexture->usage, TextureUsageBit::STORAGE)) gpuTexture->flags |= TextureFlagBit::GENERAL_LAYOUT;
     // remove stencil aspect for depth textures with sampled usage
     if (hasFlag(gpuTexture->usage, TextureUsageBit::SAMPLED)) gpuTexture->aspectMask &= ~VK_IMAGE_ASPECT_STENCIL_BIT;
 
     auto createFn = [device, gpuTexture](VkImage *pVkImage, VmaAllocation *pVmaAllocation) {
-        VkFormat             format   = mapVkFormat(gpuTexture->format);
+        VkFormat             vkFormat   = mapVkFormat(gpuTexture->format, device->gpuDevice());
         VkFormatFeatureFlags features = mapVkFormatFeatureFlags(gpuTexture->usage);
         VkFormatProperties   formatProperties;
-        vkGetPhysicalDeviceFormatProperties(device->gpuContext()->physicalDevice, format, &formatProperties);
+        vkGetPhysicalDeviceFormatProperties(device->gpuContext()->physicalDevice, vkFormat, &formatProperties);
         if (!(formatProperties.optimalTilingFeatures & features)) {
             const char *formatName = GFX_FORMAT_INFOS[toNumber(gpuTexture->format)].name.c_str();
             CC_LOG_ERROR("cmdFuncCCVKCreateTexture: The specified usage for %s is not supported on this platform", formatName);
@@ -130,11 +131,11 @@ void cmdFuncCCVKCreateTexture(CCVKDevice *device, CCVKGPUTexture *gpuTexture) {
         VkImageCreateInfo createInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
         createInfo.flags         = mapVkImageCreateFlags(gpuTexture->type);
         createInfo.imageType     = mapVkImageType(gpuTexture->type);
-        createInfo.format        = format;
+        createInfo.format        = vkFormat;
         createInfo.extent        = {gpuTexture->width, gpuTexture->height, gpuTexture->depth};
         createInfo.mipLevels     = gpuTexture->mipLevels;
         createInfo.arrayLayers   = gpuTexture->arrayLayers;
-        createInfo.samples       = device->gpuContext()->getSampleCountForAttachments(gpuTexture->format, gpuTexture->samples);
+        createInfo.samples       = device->gpuContext()->getSampleCountForAttachments(gpuTexture->format, vkFormat, gpuTexture->samples);
         createInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
         createInfo.usage         = usageFlags;
         createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -189,7 +190,7 @@ void cmdFuncCCVKCreateTextureView(CCVKDevice *device, CCVKGPUTextureView *gpuTex
         VkImageViewCreateInfo createInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
         createInfo.image                           = vkImage;
         createInfo.viewType                        = mapVkImageViewType(gpuTextureView->type);
-        createInfo.format                          = mapVkFormat(gpuTextureView->format);
+        createInfo.format                          = mapVkFormat(gpuTextureView->format, device->gpuDevice());
         createInfo.subresourceRange.aspectMask     = gpuTextureView->gpuTexture->aspectMask;
         createInfo.subresourceRange.baseMipLevel   = gpuTextureView->baseLevel;
         createInfo.subresourceRange.levelCount     = gpuTextureView->levelCount;
@@ -314,9 +315,10 @@ void cmdFuncCCVKCreateRenderPass(CCVKDevice *device, CCVKGPURenderPass *gpuRende
         thsvsGetAccessInfo(utils::toUint(endAccesses.size()), endAccesses.data(), &endAccessInfo.stageMask,
                            &endAccessInfo.accessMask, &endAccessInfo.imageLayout, &endAccessInfo.hasWriteAccess);
 
-        VkSampleCountFlagBits samples = device->gpuContext()->getSampleCountForAttachments(attachment.format, attachment.sampleCount);
+        VkFormat              vkFormat  = mapVkFormat(attachment.format, device->gpuDevice());
+        VkSampleCountFlagBits samples = device->gpuContext()->getSampleCountForAttachments(attachment.format, vkFormat, attachment.sampleCount);
 
-        attachmentDescriptions[i].format         = mapVkFormat(attachment.format);
+        attachmentDescriptions[i].format         = vkFormat;
         attachmentDescriptions[i].samples        = samples;
         attachmentDescriptions[i].loadOp         = mapVkLoadOp(attachment.loadOp);
         attachmentDescriptions[i].storeOp        = mapVkStoreOp(attachment.storeOp);
@@ -344,9 +346,10 @@ void cmdFuncCCVKCreateRenderPass(CCVKDevice *device, CCVKGPURenderPass *gpuRende
         thsvsGetAccessInfo(utils::toUint(endAccesses.size()), endAccesses.data(), &endAccessInfo.stageMask,
                            &endAccessInfo.accessMask, &endAccessInfo.imageLayout, &endAccessInfo.hasWriteAccess);
 
-        VkSampleCountFlagBits samples = device->gpuContext()->getSampleCountForAttachments(depthStencilAttachment.format, depthStencilAttachment.sampleCount);
+        VkFormat              vkFormat  = mapVkFormat(depthStencilAttachment.format, device->gpuDevice());
+        VkSampleCountFlagBits samples = device->gpuContext()->getSampleCountForAttachments(depthStencilAttachment.format, vkFormat, depthStencilAttachment.sampleCount);
 
-        attachmentDescriptions[colorAttachmentCount].format         = mapVkFormat(depthStencilAttachment.format);
+        attachmentDescriptions[colorAttachmentCount].format         = vkFormat;
         attachmentDescriptions[colorAttachmentCount].samples        = samples;
         attachmentDescriptions[colorAttachmentCount].loadOp         = mapVkLoadOp(depthStencilAttachment.depthLoadOp);
         attachmentDescriptions[colorAttachmentCount].storeOp        = mapVkStoreOp(depthStencilAttachment.depthStoreOp);
@@ -843,7 +846,7 @@ void cmdFuncCCVKCreateGraphicsPipelineState(CCVKDevice *device, CCVKGPUPipelineS
             if (shaderAttrs[i].name == attr.name) {
                 attributeDescriptions[i].location = shaderAttrs[i].location;
                 attributeDescriptions[i].binding  = attr.stream;
-                attributeDescriptions[i].format   = mapVkFormat(attr.format);
+                attributeDescriptions[i].format   = mapVkFormat(attr.format, device->gpuDevice());
                 attributeDescriptions[i].offset   = offsets[attr.stream];
                 attributeFound                    = true;
                 break;
@@ -853,7 +856,7 @@ void cmdFuncCCVKCreateGraphicsPipelineState(CCVKDevice *device, CCVKGPUPipelineS
         if (!attributeFound) { // handle absent attribute
             attributeDescriptions[i].location = shaderAttrs[i].location;
             attributeDescriptions[i].binding  = 0;
-            attributeDescriptions[i].format   = mapVkFormat(shaderAttrs[i].format);
+            attributeDescriptions[i].format   = mapVkFormat(shaderAttrs[i].format, device->gpuDevice());
             attributeDescriptions[i].offset   = 0; // reuse the first attribute as dummy data
         }
     }
@@ -1142,7 +1145,7 @@ void cmdFuncCCVKCopyBuffersToTexture(CCVKDevice *device, const uint8_t *const *b
 
     if (hasFlag(gpuTexture->flags, TextureFlags::GEN_MIPMAP)) {
         VkFormatProperties formatProperties;
-        vkGetPhysicalDeviceFormatProperties(device->gpuContext()->physicalDevice, mapVkFormat(gpuTexture->format), &formatProperties);
+        vkGetPhysicalDeviceFormatProperties(device->gpuContext()->physicalDevice, mapVkFormat(gpuTexture->format, device->gpuDevice()), &formatProperties);
         VkFormatFeatureFlags mipmapFeatures = VK_FORMAT_FEATURE_BLIT_SRC_BIT | VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT;
 
         if (formatProperties.optimalTilingFeatures & mipmapFeatures) {
@@ -1408,7 +1411,7 @@ void CCVKGPURecycleBin::clear() {
     _count = 0;
 }
 
-VkSampleCountFlagBits CCVKGPUContext::getSampleCountForAttachments(Format format, SampleCount sampleCount) const {
+VkSampleCountFlagBits CCVKGPUContext::getSampleCountForAttachments(Format format, VkFormat vkFormat, SampleCount sampleCount) const {
     if (sampleCount <= SampleCount::ONE) return VK_SAMPLE_COUNT_1_BIT;
 
     static unordered_map<Format, VkSampleCountFlags> cacheMap;
@@ -1417,7 +1420,7 @@ VkSampleCountFlagBits CCVKGPUContext::getSampleCountForAttachments(Format format
         VkImageUsageFlags usages   = hasDepth ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         VkImageFormatProperties properties;
-        vkGetPhysicalDeviceImageFormatProperties(physicalDevice, mapVkFormat(format), VK_IMAGE_TYPE_2D,
+        vkGetPhysicalDeviceImageFormatProperties(physicalDevice, vkFormat, VK_IMAGE_TYPE_2D,
                                                  VK_IMAGE_TILING_OPTIMAL, usages, 0, &properties);
         cacheMap[format] = properties.sampleCounts;
     }

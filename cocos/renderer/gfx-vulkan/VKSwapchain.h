@@ -39,8 +39,8 @@ class CCVKGPUSemaphorePool;
 
 class CC_VULKAN_API CCVKSwapchain final : public Swapchain {
 public:
-    CCVKSwapchain()           = default;
-    ~CCVKSwapchain() override = default;
+    CCVKSwapchain() = default;
+    ~CCVKSwapchain() override;
 
     inline CCVKGPUSwapchain *gpuSwapchain() { return _gpuSwapchain; }
 

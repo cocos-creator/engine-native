@@ -43,14 +43,14 @@ public:
     inline void destroySurface();
     inline void createSurface(void *windowHandle);
 
-    inline void *    getWindowHandle() { return _windowHandle; }
-    inline VsyncMode getVSyncMode() { return _vsyncMode; }
+    inline void *    getWindowHandle() const { return _windowHandle; }
+    inline VsyncMode getVSyncMode() const { return _vsyncMode; }
 
-    inline uint32_t getWidth() { return _colorTexture->getWidth(); }
-    inline uint32_t getHeight() { return _colorTexture->getHeight(); }
+    inline uint32_t getWidth() const { return _colorTexture->getWidth(); }
+    inline uint32_t getHeight() const { return _colorTexture->getHeight(); }
 
-    inline Texture *getColorTexture() { return _colorTexture; }
-    inline Texture *getDepthStencilTexture() { return _depthStencilTexture; }
+    inline Texture *getColorTexture() const { return _colorTexture; }
+    inline Texture *getDepthStencilTexture() const { return _depthStencilTexture; }
 
     virtual SurfaceTransform getSurfaceTransform() const { return _transform; }
 

@@ -55,11 +55,11 @@ void CCVKRenderPass::doInit(const RenderPassInfo & /*info*/) {
         for (uint i = 0U; i < _colorAttachments.size(); ++i) {
             subpass.colors[i] = i;
         }
-        subpass.depthStencil = hasDepth ? _colorAttachments.size() : INVALID_BINDING;
+        subpass.depthStencil = hasDepth ? utils::toUint(_colorAttachments.size()) : INVALID_BINDING;
     } else {
         for (auto &subpass : _gpuRenderPass->subpasses) {
             if (hasDepth && subpass.depthStencil == INVALID_BINDING) {
-                subpass.depthStencil = static_cast<uint>(_colorAttachments.size());
+                subpass.depthStencil = utils::toUint(_colorAttachments.size());
             }
         }
     }

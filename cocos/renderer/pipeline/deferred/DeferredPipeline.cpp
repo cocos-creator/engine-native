@@ -53,7 +53,7 @@ namespace {
     (dst)[(offset) + 3] = (src).w;
 } // namespace
 
-gfx::RenderPass *DeferredPipeline::getOrCreateRenderPass(gfx::ClearFlags clearFlags) {
+gfx::RenderPass *DeferredPipeline::getOrCreateRenderPass(gfx::ClearFlags clearFlags, gfx::Swapchain *swapchain) {
     if (_renderPasses.find(clearFlags) != _renderPasses.end()) {
         return _renderPasses[clearFlags];
     }
@@ -61,8 +61,8 @@ gfx::RenderPass *DeferredPipeline::getOrCreateRenderPass(gfx::ClearFlags clearFl
     auto *                      device = gfx::Device::getInstance();
     gfx::ColorAttachment        colorAttachment;
     gfx::DepthStencilAttachment depthStencilAttachment;
-    colorAttachment.format                = device->getColorFormat();
-    depthStencilAttachment.format         = device->getDepthStencilFormat();
+    colorAttachment.format                = swapchain->getColorTexture()->getFormat();
+    depthStencilAttachment.format         = swapchain->getDepthStencilTexture()->getFormat();
     depthStencilAttachment.stencilStoreOp = gfx::StoreOp::DISCARD;
     depthStencilAttachment.depthStoreOp   = gfx::StoreOp::DISCARD;
 
@@ -110,15 +110,15 @@ bool DeferredPipeline::initialize(const RenderPipelineInfo &info) {
     return true;
 }
 
-bool DeferredPipeline::activate() {
+bool DeferredPipeline::activate(gfx::Swapchain *swapchain) {
     _macros.setValue("CC_PIPELINE_TYPE", static_cast<float>(1.0));
 
-    if (!RenderPipeline::activate()) {
+    if (!RenderPipeline::activate(swapchain)) {
         CC_LOG_ERROR("RenderPipeline active failed.");
         return false;
     }
 
-    if (!activeRenderer()) {
+    if (!activeRenderer(swapchain)) {
         CC_LOG_ERROR("DeferredPipeline startup failed!");
         return false;
     }
@@ -128,7 +128,7 @@ bool DeferredPipeline::activate() {
 
 void DeferredPipeline::render(const vector<scene::Camera *> &cameras) {
     _commandBuffers[0]->begin();
-    _pipelineUBO->updateGlobalUBO();
+    _pipelineUBO->updateGlobalUBO(cameras[0]->window->swapchain);
     _pipelineUBO->updateMultiCameraUBO(cameras);
     for (auto *camera : cameras) {
         sceneCulling(this, camera);
@@ -154,10 +154,10 @@ void DeferredPipeline::updateQuadVertexData(const gfx::Rect &renderArea) {
 }
 
 void DeferredPipeline::genQuadVertexData(gfx::SurfaceTransform /*surfaceTransform*/, const gfx::Rect &renderArea, float *vbData) {
-    float minX = float(renderArea.x) / _width;
-    float maxX = float(renderArea.x + renderArea.width) / _width;
-    float minY = float(renderArea.y) / _height;
-    float maxY = float(renderArea.y + renderArea.height) / _height;
+    float minX = static_cast<float>(renderArea.x) / static_cast<float>(_width);
+    float maxX = static_cast<float>(renderArea.x + renderArea.width) / static_cast<float>(_width);
+    float minY = static_cast<float>(renderArea.y) / static_cast<float>(_height);
+    float maxY = static_cast<float>(renderArea.y + renderArea.height) / static_cast<float>(_height);
     if (_device->getCapabilities().screenSpaceSignY > 0) {
         std::swap(minY, maxY);
     }
@@ -222,14 +222,15 @@ bool DeferredPipeline::createQuadInputAssembler(gfx::Buffer **quadIB, gfx::Buffe
 gfx::Rect DeferredPipeline::getRenderArea(scene::Camera *camera, bool onScreen) {
     gfx::Rect renderArea;
 
-    uint w;
-    uint h;
+    float w;
+    float h;
     if (onScreen) {
-        w = camera->window->hasOnScreenAttachments && static_cast<uint>(_device->getSurfaceTransform()) % 2 ? camera->height : camera->width;
-        h = camera->window->hasOnScreenAttachments && static_cast<uint>(_device->getSurfaceTransform()) % 2 ? camera->width : camera->height;
+        gfx::Swapchain *swapchain = camera->window->swapchain;
+        w = static_cast<float>(swapchain && toNumber(swapchain->getSurfaceTransform()) % 2 ? camera->height : camera->width);
+        h = static_cast<float>(swapchain && toNumber(swapchain->getSurfaceTransform()) % 2 ? camera->width : camera->height);
     } else {
-        w = camera->width;
-        h = camera->height;
+        w = static_cast<float>(camera->width);
+        h = static_cast<float>(camera->height);
     }
 
     const auto &viewport = camera->viewPort;
@@ -246,7 +247,7 @@ void DeferredPipeline::destroyQuadInputAssembler() {
     CC_SAFE_DESTROY(_quadIAOffscreen);
 }
 
-bool DeferredPipeline::activeRenderer() {
+bool DeferredPipeline::activeRenderer(gfx::Swapchain *swapchain) {
     _commandBuffers.push_back(_device->getCommandBuffer());
     auto *const sharedData = _pipelineSceneData->getSharedData();
 
@@ -299,7 +300,7 @@ bool DeferredPipeline::activeRenderer() {
     }
 
     gfx::DepthStencilAttachment depth = {
-        _device->getDepthStencilFormat(),
+        gfx::Format::DEPTH_STENCIL,
         gfx::SampleCount::ONE,
         gfx::LoadOp::CLEAR,
         gfx::StoreOp::STORE,
@@ -323,7 +324,7 @@ bool DeferredPipeline::activeRenderer() {
     lightPass.colorAttachments.push_back(cAttch);
 
     lightPass.depthStencilAttachment = {
-        _device->getDepthStencilFormat(),
+        gfx::Format::DEPTH_STENCIL,
         gfx::SampleCount::ONE,
         gfx::LoadOp::LOAD,
         gfx::StoreOp::DISCARD,
@@ -334,8 +335,8 @@ bool DeferredPipeline::activeRenderer() {
 
     _lightingRenderPass = _device->createRenderPass(lightPass);
 
-    _width  = _device->getWidth();
-    _height = _device->getHeight();
+    _width  = swapchain->getWidth();
+    _height = swapchain->getHeight();
 
     generateDeferredRenderData();
 
@@ -380,7 +381,7 @@ void DeferredPipeline::generateDeferredRenderData() {
     }
 
     info.usage                    = gfx::TextureUsageBit::DEPTH_STENCIL_ATTACHMENT;
-    info.format                   = _device->getDepthStencilFormat();
+    info.format                   = gfx::Format::DEPTH_STENCIL;
     _deferredRenderData->depthTex = _device->createTexture(info);
 
     gfx::FramebufferInfo gbufferInfo = {

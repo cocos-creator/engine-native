@@ -42,7 +42,7 @@ void EmptySwapchain::doInit(const SwapchainInfo &info) {
     textureInfo.samples   = info.samples;
     initTexture(textureInfo, _colorTexture);
 
-    textureInfo.format = Format::D24S8;
+    textureInfo.format = Format::DEPTH_STENCIL;
     initTexture(textureInfo, _depthStencilTexture);
 }
 

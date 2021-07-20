@@ -39,6 +39,8 @@ SwapchainAgent::SwapchainAgent(Swapchain *actor)
 }
 
 SwapchainAgent::~SwapchainAgent() {
+    destroy();
+
     ENQUEUE_MESSAGE_1(
         DeviceAgent::getInstance()->getMessageQueue(), SwapchainDestruct,
         actor, _actor,

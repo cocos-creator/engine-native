@@ -221,12 +221,8 @@ enum class Format : uint32_t {
     RGB9E5,
 
     // Depth-Stencil Format
-    D16,
-    D16S8,
-    D24,
-    D24S8,
-    D32F,
-    D32F_S8,
+    DEPTH,
+    DEPTH_STENCIL,
 
     // Compressed Format
 

@@ -37,6 +37,10 @@
 namespace cc {
 namespace gfx {
 
+CCVKSwapchain::~CCVKSwapchain() {
+    destroy();
+}
+
 void CCVKSwapchain::doInit(const SwapchainInfo &info) {
     auto *      gpuDevice  = CCVKDevice::getInstance()->gpuDevice();
     const auto *gpuContext = CCVKDevice::getInstance()->gpuContext();
@@ -74,9 +78,9 @@ void CCVKSwapchain::doInit(const SwapchainInfo &info) {
 
     ///////////////////// Parameter Selection /////////////////////
 
-    size_t queueFamilyPropertiesCount = gpuContext->queueFamilyProperties.size();
+    uint32_t queueFamilyPropertiesCount = utils::toUint(gpuContext->queueFamilyProperties.size());
     _gpuSwapchain->queueFamilyPresentables.resize(queueFamilyPropertiesCount);
-    for (size_t propertyIndex = 0U; propertyIndex < queueFamilyPropertiesCount; propertyIndex++) {
+    for (uint32_t propertyIndex = 0U; propertyIndex < queueFamilyPropertiesCount; propertyIndex++) {
         vkGetPhysicalDeviceSurfaceSupportKHR(gpuContext->physicalDevice, propertyIndex,
                                              _gpuSwapchain->vkSurface, &_gpuSwapchain->queueFamilyPresentables[propertyIndex]);
     }
@@ -94,7 +98,7 @@ void CCVKSwapchain::doInit(const SwapchainInfo &info) {
     }
 
     Format colorFmt        = Format::BGRA8;
-    Format depthStencilFmt = Format::D24S8;
+    Format depthStencilFmt = Format::DEPTH_STENCIL;
 
     VkSurfaceCapabilitiesKHR surfaceCapabilities{};
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpuContext->physicalDevice, _gpuSwapchain->vkSurface, &surfaceCapabilities);
@@ -139,25 +143,6 @@ void CCVKSwapchain::doInit(const SwapchainInfo &info) {
                 case VK_FORMAT_R8G8B8A8_SRGB: colorFmt = Format::SRGB8_A8; break;
                 case VK_FORMAT_R5G6B5_UNORM_PACK16: colorFmt = Format::R5G6B5; break;
                 default: CCASSERT(0, "assumption broken: new default surface format"); break;
-            }
-        }
-    }
-
-    vector<std::pair<Format, VkFormat>> depthFormatPriorityList = {
-        {Format::D24S8, VK_FORMAT_D24_UNORM_S8_UINT},
-        {Format::D32F_S8, VK_FORMAT_D32_SFLOAT_S8_UINT},
-        {Format::D16S8, VK_FORMAT_D16_UNORM_S8_UINT},
-        {Format::D32F, VK_FORMAT_D32_SFLOAT},
-        {Format::D16, VK_FORMAT_D16_UNORM},
-    };
-    for (std::pair<Format, VkFormat> &format : depthFormatPriorityList) {
-        VkFormatProperties formatProperties;
-        vkGetPhysicalDeviceFormatProperties(gpuContext->physicalDevice, format.second, &formatProperties);
-        // Format must support depth stencil attachment for optimal tiling
-        if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
-            if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) {
-                depthStencilFmt = format.first;
-                break;
             }
         }
     }
@@ -266,7 +251,7 @@ void CCVKSwapchain::doDestroy() {
     }
 
     gpuDevice->swapchains.erase(_gpuSwapchain);
-    CC_DELETE(_gpuSwapchain);
+    CC_SAFE_DELETE(_gpuSwapchain)
 }
 
 // no-op since we maintain surface size internally

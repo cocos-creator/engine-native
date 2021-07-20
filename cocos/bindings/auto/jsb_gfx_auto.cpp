@@ -19654,7 +19654,7 @@ static bool js_gfx_Swapchain_getColorTexture(se::State& s) // NOLINT(readability
     SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
     return false;
 }
-SE_BIND_FUNC(js_gfx_Swapchain_getColorTexture)
+SE_BIND_PROP_GET(js_gfx_Swapchain_getColorTexture)
 
 static bool js_gfx_Swapchain_getDepthStencilTexture(se::State& s) // NOLINT(readability-identifier-naming)
 {
@@ -19673,7 +19673,7 @@ static bool js_gfx_Swapchain_getDepthStencilTexture(se::State& s) // NOLINT(read
     SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
     return false;
 }
-SE_BIND_FUNC(js_gfx_Swapchain_getDepthStencilTexture)
+SE_BIND_PROP_GET(js_gfx_Swapchain_getDepthStencilTexture)
 
 static bool js_gfx_Swapchain_getHeight(se::State& s) // NOLINT(readability-identifier-naming)
 {
@@ -19692,7 +19692,7 @@ static bool js_gfx_Swapchain_getHeight(se::State& s) // NOLINT(readability-ident
     SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
     return false;
 }
-SE_BIND_FUNC(js_gfx_Swapchain_getHeight)
+SE_BIND_PROP_GET(js_gfx_Swapchain_getHeight)
 
 static bool js_gfx_Swapchain_getSurfaceTransform(se::State& s) // NOLINT(readability-identifier-naming)
 {
@@ -19749,7 +19749,7 @@ static bool js_gfx_Swapchain_getWidth(se::State& s) // NOLINT(readability-identi
     SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
     return false;
 }
-SE_BIND_FUNC(js_gfx_Swapchain_getWidth)
+SE_BIND_PROP_GET(js_gfx_Swapchain_getWidth)
 
 static bool js_gfx_Swapchain_getWindowHandle(se::State& s) // NOLINT(readability-identifier-naming)
 {
@@ -19839,15 +19839,15 @@ bool js_register_gfx_Swapchain(se::Object* obj) // NOLINT(readability-identifier
 {
     auto* cls = se::Class::create("Swapchain", obj, __jsb_cc_gfx_GFXObject_proto, _SE(js_gfx_Swapchain_constructor));
 
+    cls->defineProperty("width", _SE(js_gfx_Swapchain_getWidth), nullptr);
+    cls->defineProperty("height", _SE(js_gfx_Swapchain_getHeight), nullptr);
     cls->defineProperty("surfaceTransform", _SE(js_gfx_Swapchain_getSurfaceTransform), nullptr);
+    cls->defineProperty("colorTexture", _SE(js_gfx_Swapchain_getColorTexture), nullptr);
+    cls->defineProperty("depthStencilTexture", _SE(js_gfx_Swapchain_getDepthStencilTexture), nullptr);
     cls->defineFunction("createSurface", _SE(js_gfx_Swapchain_createSurface));
     cls->defineFunction("destroy", _SE(js_gfx_Swapchain_destroy));
     cls->defineFunction("destroySurface", _SE(js_gfx_Swapchain_destroySurface));
-    cls->defineFunction("getColorTexture", _SE(js_gfx_Swapchain_getColorTexture));
-    cls->defineFunction("getDepthStencilTexture", _SE(js_gfx_Swapchain_getDepthStencilTexture));
-    cls->defineFunction("getHeight", _SE(js_gfx_Swapchain_getHeight));
     cls->defineFunction("getVSyncMode", _SE(js_gfx_Swapchain_getVSyncMode));
-    cls->defineFunction("getWidth", _SE(js_gfx_Swapchain_getWidth));
     cls->defineFunction("getWindowHandle", _SE(js_gfx_Swapchain_getWindowHandle));
     cls->defineFunction("initialize", _SE(js_gfx_Swapchain_initialize));
     cls->defineFunction("resize", _SE(js_gfx_Swapchain_resize));

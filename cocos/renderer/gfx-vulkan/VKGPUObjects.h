@@ -27,6 +27,8 @@
 
 #include "VKStd.h"
 #include "VKUtils.h"
+#include "gfx-base/GFXDef-common.h"
+#include "vulkan/vulkan_core.h"
 
 #define TBB_USE_EXCEPTIONS 0 // no-rtti for now
 #include "tbb/concurrent_unordered_map.h"
@@ -68,7 +70,7 @@ public:
         });
     }
 
-    VkSampleCountFlagBits getSampleCountForAttachments(Format format, SampleCount sampleCount) const;
+    VkSampleCountFlagBits getSampleCountForAttachments(Format format, VkFormat vkFormat, SampleCount sampleCount) const;
 };
 
 struct CCVKAccessInfo {
@@ -360,20 +362,23 @@ class CCVKGPUCommandBufferPool;
 class CCVKGPUDescriptorSetPool;
 class CCVKGPUDevice final : public Object {
 public:
-    VkDevice                      vkDevice = VK_NULL_HANDLE;
+    VkDevice                      vkDevice{VK_NULL_HANDLE};
     vector<VkLayerProperties>     layers;
     vector<VkExtensionProperties> extensions;
-    VmaAllocator                  memoryAllocator = VK_NULL_HANDLE;
-    VkPipelineCache               vkPipelineCache = VK_NULL_HANDLE;
-    uint                          minorVersion    = 0U;
+    VmaAllocator                  memoryAllocator{VK_NULL_HANDLE};
+    VkPipelineCache               vkPipelineCache{VK_NULL_HANDLE};
+    uint                          minorVersion{0U};
 
-    uint curBackBufferIndex = 0U;
-    uint backBufferCount    = 3U;
+    VkFormat                      depthFormat{VK_FORMAT_UNDEFINED};
+    VkFormat                      depthStencilFormat{VK_FORMAT_UNDEFINED};
 
-    bool useDescriptorUpdateTemplate = false;
-    bool useMultiDrawIndirect        = false;
+    uint curBackBufferIndex{0U};
+    uint backBufferCount{3U};
 
-    PFN_vkCreateRenderPass2 createRenderPass2 = nullptr;
+    bool useDescriptorUpdateTemplate{false};
+    bool useMultiDrawIndirect{false};
+
+    PFN_vkCreateRenderPass2 createRenderPass2{nullptr};
 
     // for default backup usages
     CCVKGPUSampler     defaultSampler;

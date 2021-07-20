@@ -42,6 +42,7 @@
 #include "VKTexture.h"
 #include "VKTextureBarrier.h"
 #include "VKUtils.h"
+#include "base/Utils.h"
 #include "gfx-vulkan/VKGPUObjects.h"
 #include "gfx-vulkan/VKSwapchain.h"
 #include "vulkan/vulkan_core.h"
@@ -201,6 +202,35 @@ bool CCVKDevice::doInit(const DeviceInfo & /*info*/) {
     volkLoadDevice(_gpuDevice->vkDevice);
 
     ///////////////////// Gather Device Properties /////////////////////
+
+    auto findPreferredDepthFormat = [this](const VkFormat *formats, uint32_t count, VkFormat *pFormat) {
+        for (uint32_t i = 0; i < count; ++i) {
+            VkFormat           format = formats[i];
+            VkFormatProperties formatProperties;
+            vkGetPhysicalDeviceFormatProperties(_gpuContext->physicalDevice, format, &formatProperties);
+            // Format must support depth stencil attachment for optimal tiling
+            if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+                if (formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) {
+                    *pFormat = format;
+                    break;
+                }
+            }
+        }
+    };
+
+    VkFormat depthFormatPriorityList[]{
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_X8_D24_UNORM_PACK32,
+        VK_FORMAT_D16_UNORM,
+    };
+    findPreferredDepthFormat(depthFormatPriorityList, 3, &_gpuDevice->depthFormat);
+
+    VkFormat depthStencilFormatPriorityList[]{
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+        VK_FORMAT_D16_UNORM_S8_UINT,
+    };
+    findPreferredDepthFormat(depthStencilFormatPriorityList, 3, &_gpuDevice->depthStencilFormat);
 
     _features[toNumber(Feature::COLOR_FLOAT)]               = true;
     _features[toNumber(Feature::COLOR_HALF_FLOAT)]          = true;
@@ -553,9 +583,9 @@ void CCVKDevice::present() {
 
     if (!vkSwapchains.empty()) { // don't present if not acquired
         VkPresentInfoKHR presentInfo{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
-        presentInfo.waitSemaphoreCount = queue->gpuQueue()->lastSignaledSemaphores.size();
+        presentInfo.waitSemaphoreCount = utils::toUint(queue->gpuQueue()->lastSignaledSemaphores.size());
         presentInfo.pWaitSemaphores    = queue->gpuQueue()->lastSignaledSemaphores.data();
-        presentInfo.swapchainCount     = vkSwapchains.size();
+        presentInfo.swapchainCount     = utils::toUint(vkSwapchains.size());
         presentInfo.pSwapchains        = vkSwapchains.data();
         presentInfo.pImageIndices      = vkSwapchainIndices.data();
 
@@ -593,7 +623,7 @@ void CCVKDevice::waitAllFences() {
     }
 
     if (!fences.empty()) {
-        VK_CHECK(vkWaitForFences(_gpuDevice->vkDevice, fences.size(), fences.data(), VK_TRUE, DEFAULT_TIMEOUT));
+        VK_CHECK(vkWaitForFences(_gpuDevice->vkDevice, utils::toUint(fences.size()), fences.data(), VK_TRUE, DEFAULT_TIMEOUT));
 
         for (auto *fencePool : _gpuFencePools) {
             fencePool->reset();
@@ -789,11 +819,11 @@ static VkResult VKAPI_PTR vkCreateRenderPass2KHRFallback(
     }
 
     VkRenderPassCreateInfo renderPassCreateInfo{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
-    renderPassCreateInfo.attachmentCount = attachmentDescriptions.size();
+    renderPassCreateInfo.attachmentCount = utils::toUint(attachmentDescriptions.size());
     renderPassCreateInfo.pAttachments    = attachmentDescriptions.data();
-    renderPassCreateInfo.subpassCount    = subpassDescriptions.size();
+    renderPassCreateInfo.subpassCount    = utils::toUint(subpassDescriptions.size());
     renderPassCreateInfo.pSubpasses      = subpassDescriptions.data();
-    renderPassCreateInfo.dependencyCount = subpassDependencies.size();
+    renderPassCreateInfo.dependencyCount = utils::toUint(subpassDependencies.size());
     renderPassCreateInfo.pDependencies   = subpassDependencies.data();
 
     return vkCreateRenderPass(device, &renderPassCreateInfo, pAllocator, pRenderPass);

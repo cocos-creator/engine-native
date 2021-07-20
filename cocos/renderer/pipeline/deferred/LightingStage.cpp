@@ -221,7 +221,8 @@ void LightingStage::initLightingBuffer() {
 
     // color/pos/dir/angle 都是vec4存储, 最后一个vec4只要x存储光源个数
     uint totalSize = sizeof(Vec4) * 4 * _maxDeferredLights;
-    totalSize      = static_cast<uint>(std::ceil(static_cast<float>(totalSize) / device->getCapabilities().uboOffsetAlignment) * device->getCapabilities().uboOffsetAlignment);
+    uint alignment = device->getCapabilities().uboOffsetAlignment;
+    totalSize      = (totalSize + alignment - 1) / alignment * alignment; // ceil(totalSize / alignment) * alignment
 
     // create lighting buffer and view
     if (_deferredLitsBufs == nullptr) {
@@ -286,7 +287,7 @@ void LightingStage::activate(RenderPipeline *pipeline, RenderFlow *flow) {
     reflectionPassInfo.colorAttachments.push_back(cAttch);
 
     reflectionPassInfo.depthStencilAttachment = {
-        _device->getDepthStencilFormat(),
+        gfx::Format::DEPTH_STENCIL,
         gfx::SampleCount::ONE,
         gfx::LoadOp::LOAD,
         gfx::StoreOp::DISCARD,

@@ -46,21 +46,21 @@ namespace pipeline {
 
 Mat4 matShadowViewProj;
 
-void PipelineUBO::updateGlobalUBOView(const RenderPipeline * /*pipeline*/, std::array<float, UBOGlobal::COUNT> *bufferView) {
+void PipelineUBO::updateGlobalUBOView(const gfx::Swapchain *swapchain, std::array<float, UBOGlobal::COUNT> *bufferView) {
     auto *const root          = scene::Root::instance;
     auto *      device        = gfx::Device::getInstance();
     auto &      uboGlobalView = *bufferView;
 
-    const auto shadingWidth  = std::floor(device->getWidth());
-    const auto shadingHeight = std::floor(device->getHeight());
+    const auto shadingWidth  = std::floor(swapchain->getWidth());
+    const auto shadingHeight = std::floor(swapchain->getHeight());
 
     // update UBOGlobal
     uboGlobalView[UBOGlobal::TIME_OFFSET + 0] = root->cumulativeTime;
     uboGlobalView[UBOGlobal::TIME_OFFSET + 1] = root->frameTime;
     uboGlobalView[UBOGlobal::TIME_OFFSET + 2] = static_cast<float>(Application::getInstance()->getTotalFrames());
 
-    uboGlobalView[UBOGlobal::SCREEN_SIZE_OFFSET + 0] = static_cast<float>(device->getWidth());
-    uboGlobalView[UBOGlobal::SCREEN_SIZE_OFFSET + 1] = static_cast<float>(device->getHeight());
+    uboGlobalView[UBOGlobal::SCREEN_SIZE_OFFSET + 0] = static_cast<float>(shadingWidth);
+    uboGlobalView[UBOGlobal::SCREEN_SIZE_OFFSET + 1] = static_cast<float>(shadingHeight);
     uboGlobalView[UBOGlobal::SCREEN_SIZE_OFFSET + 2] = 1.0F / uboGlobalView[UBOGlobal::SCREEN_SIZE_OFFSET];
     uboGlobalView[UBOGlobal::SCREEN_SIZE_OFFSET + 3] = 1.0F / uboGlobalView[UBOGlobal::SCREEN_SIZE_OFFSET + 1];
 
@@ -86,8 +86,8 @@ void PipelineUBO::updateCameraUBOView(const RenderPipeline *pipeline, std::array
     auto *device        = gfx::Device::getInstance();
     auto &uboCameraView = *bufferView;
 
-    const auto shadingWidth  = std::floor(device->getWidth());
-    const auto shadingHeight = std::floor(device->getHeight());
+    const auto shadingWidth  = std::floor(camera->window->swapchain->getWidth());
+    const auto shadingHeight = std::floor(camera->window->swapchain->getHeight());
 
     uboCameraView[UBOCamera::SCREEN_SCALE_OFFSET + 0] = static_cast<float>(camera->width / shadingWidth * shadingScale);
     uboCameraView[UBOCamera::SCREEN_SCALE_OFFSET + 1] = static_cast<float>(camera->height / shadingHeight * shadingScale);
@@ -173,7 +173,7 @@ void PipelineUBO::updateShadowUBOView(const RenderPipeline *pipeline, std::array
     if (shadowInfo->enabled) {
         if (mainLight && shadowInfo->shadowType == scene::ShadowType::SHADOWMAP) {
             auto *const node = mainLight->getNode();
-            cc::Mat4          matShadowCamera;
+            cc::Mat4    matShadowCamera;
 
             // light proj
             float x;
@@ -206,15 +206,15 @@ void PipelineUBO::updateShadowUBOView(const RenderPipeline *pipeline, std::array
             matShadowViewProj.multiply(matShadowView);
             memcpy(shadowUBO.data() + UBOShadow::MAT_LIGHT_VIEW_PROJ_OFFSET, matShadowViewProj.m, sizeof(matShadowViewProj));
 
-            const float linear            = hFTexture ? 1.0F : 0.0F;
-            float      shadowNFLSInfos[4] = {shadowInfo->nearValue, farClamp, linear, 1.0F - shadowInfo->saturation};
+            const float linear             = hFTexture ? 1.0F : 0.0F;
+            float       shadowNFLSInfos[4] = {shadowInfo->nearValue, farClamp, linear, 1.0F - shadowInfo->saturation};
             memcpy(shadowUBO.data() + UBOShadow::SHADOW_NEAR_FAR_LINEAR_SATURATION_INFO_OFFSET, &shadowNFLSInfos, sizeof(shadowNFLSInfos));
 
             float shadowWHPBInfos[4] = {shadowInfo->size.x, shadowInfo->size.y, static_cast<float>(shadowInfo->pcfType), shadowInfo->bias};
             memcpy(shadowUBO.data() + UBOShadow::SHADOW_WIDTH_HEIGHT_PCF_BIAS_INFO_OFFSET, &shadowWHPBInfos, sizeof(shadowWHPBInfos));
 
-            const float packing           = hFTexture ? 0.0F : 1.0F;
-            float      shadowLPNNInfos[4] = {0.0F, packing, shadowInfo->normalBias, 0.0F};
+            const float packing            = hFTexture ? 0.0F : 1.0F;
+            float       shadowLPNNInfos[4] = {0.0F, packing, shadowInfo->normalBias, 0.0F};
             memcpy(shadowUBO.data() + UBOShadow::SHADOW_LIGHT_PACKING_NBIAS_NULL_INFO_OFFSET, &shadowLPNNInfos, sizeof(shadowLPNNInfos));
         } else if (mainLight && shadowInfo->shadowType == scene::ShadowType::PLANAR) {
             updateDirLight(shadowInfo, mainLight, &shadowUBO);
@@ -226,14 +226,14 @@ void PipelineUBO::updateShadowUBOView(const RenderPipeline *pipeline, std::array
 }
 
 void PipelineUBO::updateShadowUBOLightView(const RenderPipeline *pipeline, std::array<float, UBOShadow::COUNT> *bufferView, const scene::Light *light) {
-    auto *const sceneData          = pipeline->getPipelineSceneData();
-    auto *      shadowInfo         = sceneData->getSharedData()->shadow;
-    auto *      device             = gfx::Device::getInstance();
-    auto *      sphere             = sceneData->getSphere();
-    auto &      shadowUBO          = *bufferView;
-    const bool  hFTexture          = supportsHalfFloatTexture(device);
-    const float linear             = hFTexture ? 1.0F : 0.0F;
-    const float packing            = hFTexture ? 0.0F : 1.0F;
+    auto *const sceneData  = pipeline->getPipelineSceneData();
+    auto *      shadowInfo = sceneData->getSharedData()->shadow;
+    auto *      device     = gfx::Device::getInstance();
+    auto *      sphere     = sceneData->getSphere();
+    auto &      shadowUBO  = *bufferView;
+    const bool  hFTexture  = supportsHalfFloatTexture(device);
+    const float linear     = hFTexture ? 1.0F : 0.0F;
+    const float packing    = hFTexture ? 0.0F : 1.0F;
     switch (light->getType()) {
         case scene::LightType::DIRECTIONAL: {
             const auto *directionalLight = static_cast<const scene::DirectionalLight *>(light);
@@ -358,11 +358,11 @@ void PipelineUBO::destroy() {
     _ubos.clear();
 }
 
-void PipelineUBO::updateGlobalUBO() {
+void PipelineUBO::updateGlobalUBO(const gfx::Swapchain *swapchain) {
     auto *const globalDSManager = _pipeline->getGlobalDSManager();
     auto *const ds              = _pipeline->getDescriptorSet();
     ds->update();
-    PipelineUBO::updateGlobalUBOView(_pipeline, &_globalUBO);
+    PipelineUBO::updateGlobalUBOView(swapchain, &_globalUBO);
     ds->getBuffer(UBOGlobal::BINDING)->update(_globalUBO.data(), UBOGlobal::SIZE);
 
     globalDSManager->bindBuffer(UBOGlobal::BINDING, ds->getBuffer(UBOGlobal::BINDING));

@@ -652,14 +652,17 @@ static bool js_pipeline_RenderPipeline_activate(se::State& s) // NOLINT(readabil
     const auto& args = s.args();
     size_t argc = args.size();
     CC_UNUSED bool ok = true;
-    if (argc == 0) {
-        bool result = cobj->activate();
+    if (argc == 1) {
+        HolderType<cc::gfx::Swapchain*, false> arg0 = {};
+        ok &= sevalue_to_native(args[0], &arg0, s.thisObject());
+        SE_PRECONDITION2(ok, false, "js_pipeline_RenderPipeline_activate : Error processing arguments");
+        bool result = cobj->activate(arg0.value());
         ok &= nativevalue_to_se(result, s.rval(), nullptr /*ctx*/);
         SE_PRECONDITION2(ok, false, "js_pipeline_RenderPipeline_activate : Error processing arguments");
         SE_HOLD_RETURN_VALUE(result, s.thisObject(), s.rval());
         return true;
     }
-    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 1);
     return false;
 }
 SE_BIND_FUNC(js_pipeline_RenderPipeline_activate)
@@ -1945,19 +1948,6 @@ static bool js_pipeline_InstancedBuffer_setDynamicOffset(se::State& s) // NOLINT
 }
 SE_BIND_FUNC(js_pipeline_InstancedBuffer_setDynamicOffset)
 
-static bool js_pipeline_InstancedBuffer_destroyInstancedBuffer(se::State& s) // NOLINT(readability-identifier-naming)
-{
-    const auto& args = s.args();
-    size_t argc = args.size();
-    if (argc == 0) {
-        cc::pipeline::InstancedBuffer::destroyInstancedBuffer();
-        return true;
-    }
-    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
-    return false;
-}
-SE_BIND_FUNC(js_pipeline_InstancedBuffer_destroyInstancedBuffer)
-
 static bool js_pipeline_InstancedBuffer_get(se::State& s) // NOLINT(readability-identifier-naming)
 {
     CC_UNUSED bool ok = true;
@@ -1994,6 +1984,19 @@ static bool js_pipeline_InstancedBuffer_get(se::State& s) // NOLINT(readability-
     return false;
 }
 SE_BIND_FUNC(js_pipeline_InstancedBuffer_get)
+
+static bool js_pipeline_InstancedBuffer_destroyInstancedBuffer(se::State& s) // NOLINT(readability-identifier-naming)
+{
+    const auto& args = s.args();
+    size_t argc = args.size();
+    if (argc == 0) {
+        cc::pipeline::InstancedBuffer::destroyInstancedBuffer();
+        return true;
+    }
+    SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
+    return false;
+}
+SE_BIND_FUNC(js_pipeline_InstancedBuffer_destroyInstancedBuffer)
 
 SE_DECLARE_FINALIZE_FUNC(js_cc_pipeline_InstancedBuffer_finalize)
 
@@ -2032,8 +2035,8 @@ bool js_register_pipeline_InstancedBuffer(se::Object* obj) // NOLINT(readability
 
     cls->defineFunction("destroy", _SE(js_pipeline_InstancedBuffer_destroy));
     cls->defineFunction("setDynamicOffset", _SE(js_pipeline_InstancedBuffer_setDynamicOffset));
-    cls->defineStaticFunction("destroyInstancedBuffer", _SE(js_pipeline_InstancedBuffer_destroyInstancedBuffer));
     cls->defineStaticFunction("get", _SE(js_pipeline_InstancedBuffer_get));
+    cls->defineStaticFunction("destroyInstancedBuffer", _SE(js_pipeline_InstancedBuffer_destroyInstancedBuffer));
     cls->defineFinalizeFunction(_SE(js_cc_pipeline_InstancedBuffer_finalize));
     cls->install();
     JSBClassType::registerClass<cc::pipeline::InstancedBuffer>(cls);
@@ -2387,25 +2390,25 @@ bool register_all_pipeline(se::Object* obj)
     se::Object* ns = nsVal.toObject();
 
     js_register_pipeline_RenderQueueDesc(ns);
-    js_register_pipeline_RenderFlow(ns);
-    js_register_pipeline_RenderStage(ns);
-    js_register_pipeline_LightingStage(ns);
-    js_register_pipeline_RenderPipeline(ns);
-    js_register_pipeline_RenderStageInfo(ns);
-    js_register_pipeline_ForwardPipeline(ns);
-    js_register_pipeline_GbufferStage(ns);
-    js_register_pipeline_RenderPipelineInfo(ns);
-    js_register_pipeline_ForwardStage(ns);
-    js_register_pipeline_ShadowStage(ns);
     js_register_pipeline_GlobalDSManager(ns);
+    js_register_pipeline_RenderPipelineInfo(ns);
+    js_register_pipeline_RenderPipeline(ns);
+    js_register_pipeline_ForwardPipeline(ns);
     js_register_pipeline_RenderFlowInfo(ns);
-    js_register_pipeline_PostprocessStage(ns);
+    js_register_pipeline_RenderFlow(ns);
     js_register_pipeline_ForwardFlow(ns);
+    js_register_pipeline_RenderStageInfo(ns);
+    js_register_pipeline_RenderStage(ns);
+    js_register_pipeline_ForwardStage(ns);
+    js_register_pipeline_ShadowFlow(ns);
+    js_register_pipeline_ShadowStage(ns);
     js_register_pipeline_InstancedBuffer(ns);
     js_register_pipeline_DeferredPipeline(ns);
     js_register_pipeline_GbufferFlow(ns);
+    js_register_pipeline_GbufferStage(ns);
     js_register_pipeline_LightingFlow(ns);
-    js_register_pipeline_ShadowFlow(ns);
+    js_register_pipeline_LightingStage(ns);
+    js_register_pipeline_PostprocessStage(ns);
     return true;
 }
 
