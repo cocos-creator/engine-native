@@ -170,7 +170,6 @@ elseif(OHOS)
     set_if_undefined(CC_USE_GLES2 OFF)
 endif()
 
-set(CC_USE_GLES3 OFF)
 set(CC_USE_GLES2 OFF)
 
 if(USE_PHYSICS_PHYSX)

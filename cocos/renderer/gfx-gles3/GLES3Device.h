@@ -36,9 +36,11 @@ class GLES3GPUStateCache;
 class GLES3GPUStagingBufferPool;
 class GLES3GPUFramebufferCacheMap;
 class GLES3GPUConstantRegistry;
+class GLES3Swapchain;
 
 class CC_GLES3_API GLES3Device final : public Device {
 public:
+    friend class GLES3Swapchain;
     static GLES3Device *getInstance();
 
     ~GLES3Device() override;
@@ -57,11 +59,14 @@ public:
     using Device::createRenderPass;
     using Device::createSampler;
     using Device::createShader;
+    using Device::createSwapchain;
     using Device::createTexture;
     using Device::createTextureBarrier;
 
-    void resize(uint width, uint height) override;
-    void acquire() override;
+    //void resize(uint width, uint height) override;
+    //void acquire() override;
+
+    void acquire(Swapchain *const *swapchains, uint32_t count) override;
     void present() override;
 
     inline GLES3GPUStateCache *         stateCache() const { return _gpuStateCache; }
@@ -102,21 +107,25 @@ protected:
     TextureBarrier *     createTextureBarrier() override;
     void                 copyBuffersToTexture(const uint8_t *const *buffers, Texture *dst, const BufferTextureCopy *regions, uint count) override;
     void                 copyTextureToBuffers(Texture *src, uint8_t *const *buffers, const BufferTextureCopy *region, uint count) override;
+    Swapchain *          createSwapchain() override;
+    void                 onSwapchainCreated(GLES3Swapchain *swapchain);
+    void                 onSwapchainDestroyed(GLES3Swapchain *swapchain);
+    void                 initByPBuffer();
+    void                 initByContext(GLES3Context *context);
+    GLES3Context *       getContextForSharing() const;
 
-    void releaseSurface(uintptr_t windowHandle) override;
-    void acquireSurface(uintptr_t windowHandle) override;
-
-    void bindRenderContext(bool bound) override;
-    void bindDeviceContext(bool bound) override;
-
-    GLES3Context *               _renderContext          = nullptr;
-    GLES3Context *               _deviceContext          = nullptr;
     GLES3GPUStateCache *         _gpuStateCache          = nullptr;
     GLES3GPUStagingBufferPool *  _gpuStagingBufferPool   = nullptr;
     GLES3GPUConstantRegistry *   _gpuConstantRegistry    = nullptr;
     GLES3GPUFramebufferCacheMap *_gpuFramebufferCacheMap = nullptr;
 
     StringArray _extensions;
+
+    GLES3Swapchain *_currentSwapchain = nullptr;
+
+    std::set<Swapchain *> _swapchains;
+    int32_t               _majorVer = 0;
+    int32_t               _minorVer = 0;
 };
 
 } // namespace gfx

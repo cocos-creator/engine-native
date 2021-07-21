@@ -28,17 +28,32 @@
 #include <vector>
 #include "GLES3Std.h"
 #include "GLES3Wrangler.h"
-#include "gfx-base/GFXContext.h"
+#include "gfx-base/GFXDef-common.h"
 
 namespace cc {
 namespace gfx {
 
-class CC_GLES3_API GLES3Context final : public Context {
+    class GLES3Context;
+
+struct GLES3ContextInfo {
+    VsyncMode     vsyncMode = VsyncMode::OFF;
+    void *        windowHandle = nullptr;
+    GLES3Context *sharedCtx = nullptr;
+    bool          msaaEnabled = false;
+};
+
+class CC_GLES3_API GLES3Context final {
 public:
     GLES3Context();
-    ~GLES3Context() override;
+    ~GLES3Context();
 
-    void present() override;
+    bool init(const GLES3ContextInfo &info);
+    void destroy();
+
+    Format getColorFormat() const { return _colorFmt; }
+    Format getDepthStencilFormat() const { return _depthStencilFmt; }
+
+    void present();
 
     bool makeCurrent(bool bound);
     bool checkExtension(const String &extension) const;
@@ -60,7 +75,7 @@ public:
     inline uint8_t multiSampleCount() const { return _sampleCount; }
     inline uint    getDefaultFramebuffer() const { return _defaultFBO; }
 
-    void releaseSurface(uintptr_t windowHandle);
+    void releaseSurface();
     void acquireSurface(uintptr_t windowHandle);
 
 protected:
@@ -70,8 +85,8 @@ protected:
     void doDestroyCustomFrameBuffer();
 #endif
 
-    bool doInit(const ContextInfo &info) override;
-    void doDestroy() override;
+    bool doInit(const GLES3ContextInfo &info);
+    void doDestroy();
 
     bool    _isPrimaryContex = false;
     bool    _isInitialized   = false;
@@ -85,17 +100,22 @@ protected:
     uint _defaultColorBuffer        = 0;
     uint _defaultDepthStencilBuffer = 0;
 #else
-    NativeDisplayType        _nativeDisplay    = 0; // NOLINT(modernize-use-nullptr) portability issues
-    EGLDisplay               _eglDisplay       = EGL_NO_DISPLAY;
-    EGLConfig                _eglConfig        = EGL_NO_CONFIG_KHR;
-    EGLSurface               _eglSurface       = EGL_NO_SURFACE;
-    EGLContext               _eglContext       = EGL_NO_CONTEXT;
-    EGLContext               _eglSharedContext = EGL_NO_CONTEXT;
-    std::vector<EGLConfig>   _vecEGLConfig;
+    NativeDisplayType      _nativeDisplay    = 0; // NOLINT(modernize-use-nullptr) portability issues
+    EGLDisplay             _eglDisplay       = EGL_NO_DISPLAY;
+    EGLConfig              _eglConfig        = EGL_NO_CONFIG_KHR;
+    EGLSurface             _eglSurface       = EGL_NO_SURFACE;
+    EGLContext             _eglContext       = EGL_NO_CONTEXT;
+    EGLContext             _eglSharedContext = EGL_NO_CONTEXT;
+    std::vector<EGLConfig> _vecEGLConfig;
 #endif
     int         _majorVersion = 0;
     int         _minorVersion = 0;
     StringArray _extensions;
+
+    VsyncMode _vsyncMode       = VsyncMode::OFF;
+    void *    _windowHandle    = nullptr;
+    Format    _colorFmt        = Format::UNKNOWN;
+    Format    _depthStencilFmt = Format::UNKNOWN;
 };
 
 } // namespace gfx

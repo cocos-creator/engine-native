@@ -25,28 +25,25 @@
 
 #pragma once
 
-#include "gfx-base/GFXTexture.h"
+#include "GLES3Std.h"
+#include "gfx-base/GFXSwapchain.h"
+#include "GLES3Context.h"
 
 namespace cc {
 namespace gfx {
 
-class GLES3GPUTexture;
-
-class CC_GLES3_API GLES3Texture final : public Texture {
+class GLES3Swapchain : public Swapchain {
 public:
-    GLES3Texture();
-    ~GLES3Texture();
-
-    inline GLES3GPUTexture *gpuTexture() const { return _gpuTexture; }
-
+    GLES3Context *getContext() const { return _context; }
 protected:
-    void doInit(const TextureInfo &info) override;
-    void doInit(const TextureViewInfo &info) override;
+    void doInit(const SwapchainInfo &info) override;
     void doDestroy() override;
-    void doResize(uint width, uint height, uint size) override;
-    void doInit(const SwapchainTextureInfo &info) override;
+    void doResize(uint32_t width, uint32_t height) override;
+    void doDestroySurface() override;
+    void doCreateSurface(void *windowHandle) override;
 
-    GLES3GPUTexture *_gpuTexture = nullptr;
+private:
+    GLES3Context *_context = nullptr;
 };
 
 } // namespace gfx

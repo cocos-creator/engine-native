@@ -844,7 +844,7 @@ void cmdFuncGLES3CreateTexture(GLES3Device *device, GLES3GPUTexture *gpuTexture)
     gpuTexture->glFormat      = mapGLFormat(gpuTexture->format);
     gpuTexture->glType        = formatToGLType(gpuTexture->format);
 
-    if (gpuTexture->samples > SampleCount::X1) {
+    if (gpuTexture->samples > SampleCount::ONE) {
         GLint supportedSampleCountCount = 0;
         GL_CHECK(glGetInternalformativ(GL_RENDERBUFFER, gpuTexture->glInternalFmt, GL_SAMPLES, 1, &supportedSampleCountCount));
         supportedSampleCounts.resize(supportedSampleCountCount);
@@ -1571,7 +1571,7 @@ static GLuint doCreateFramebuffer(GLES3Device *                    device,
         GLenum glAttachment = hasStencil ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
         if (depthStencil->glTexture) {
             GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, glAttachment, depthStencil->glTarget, depthStencil->glTexture, 0));
-        } else {
+        } else if(depthStencil->glRenderbuffer) {
             GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, glAttachment, depthStencil->glTarget, depthStencil->glRenderbuffer));
         }
 
@@ -1615,7 +1615,7 @@ static void doCreateFramebufferInstance(GLES3Device *device, GLES3GPUFramebuffer
     uint offscreenCount{0U};
     for (uint idx : colors) {
         const auto *colorTex = gpuFBO->gpuColorTextures[idx];
-        if (colorTex) ++offscreenCount;
+        if (colorTex && (colorTex->glTexture != 0 || colorTex->glRenderbuffer != 0)) ++offscreenCount;
     }
     CCASSERT(!offscreenCount || offscreenCount == colors.size(), "Partially offscreen FBO is not supported");
 
@@ -1632,7 +1632,7 @@ static void doCreateFramebufferInstance(GLES3Device *device, GLES3GPUFramebuffer
                                          : gpuFBO->gpuDepthStencilTexture;
     }
 
-    if (offscreenCount || depthStencilTexture) {
+    if (offscreenCount || (depthStencilTexture && (depthStencilTexture->glTexture || depthStencilTexture->glRenderbuffer))) {
         outFBO->glFramebuffer = doCreateFramebuffer(device, gpuFBO->gpuColorTextures, colors.data(), colors.size(),
                                                     depthStencilTexture, resolves, depthStencilResolveTexture, &outFBO->resolveMask);
         if (outFBO->resolveMask) {
@@ -2842,20 +2842,19 @@ void cmdFuncGLES3BlitTexture(GLES3Device *device, GLES3GPUTexture *gpuTextureSrc
     for (uint i = 0U; i < count; ++i) {
         const TextureBlit &region = regions[i];
 
-        GLuint srcFramebuffer = gpuTextureSrc ? device->framebufferCacheMap()->getFramebufferFromTexture(gpuTextureSrc, region.srcSubres)
+        GLuint srcFramebuffer = gpuTextureSrc || gpuTextureSrc->glTexture != 0 || gpuTextureSrc->glRenderbuffer != 0 ? device->framebufferCacheMap()->getFramebufferFromTexture(gpuTextureSrc, region.srcSubres)
                                               : device->constantRegistry()->defaultFramebuffer;
         if (cache->glReadFramebuffer != srcFramebuffer) {
             GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, srcFramebuffer));
             cache->glReadFramebuffer = srcFramebuffer;
         }
 
-        GLuint dstFramebuffer = gpuTextureDst ? device->framebufferCacheMap()->getFramebufferFromTexture(gpuTextureDst, region.dstSubres)
+        GLuint dstFramebuffer = gpuTextureSrc || gpuTextureSrc->glTexture != 0 || gpuTextureSrc->glRenderbuffer != 0 ? device->framebufferCacheMap()->getFramebufferFromTexture(gpuTextureDst, region.dstSubres)
                                               : device->constantRegistry()->defaultFramebuffer;
         if (cache->glDrawFramebuffer != dstFramebuffer) {
             GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstFramebuffer));
             cache->glDrawFramebuffer = dstFramebuffer;
         }
-
         GL_CHECK(glBlitFramebuffer(
             region.srcOffset.x,
             region.srcOffset.y,
