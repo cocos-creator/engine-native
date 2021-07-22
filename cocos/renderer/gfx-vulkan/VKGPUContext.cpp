@@ -90,8 +90,10 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugReportCallback(VkDebugReportFlagsEXT      fl
 } // namespace
 
 bool CCVKGPUContext::initialize() {
-    // only enable the absolute essentials for now
-    vector<const char *> requestedLayers{};
+    // only enable the absolute essentials
+    vector<const char *> requestedLayers{
+        "VK_LAYER_KHRONOS_synchronization2"
+    };
     vector<const char *> requestedExtensions{
         VK_KHR_SURFACE_EXTENSION_NAME,
     };

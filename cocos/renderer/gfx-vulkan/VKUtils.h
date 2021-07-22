@@ -91,6 +91,7 @@ extern const ThsvsAccessType            THSVS_ACCESS_TYPES[];
 extern const VkResolveModeFlagBits      VK_RESOLVE_MODES[];
 extern const VkImageLayout              VK_IMAGE_LAYOUTS[];
 extern const VkStencilFaceFlags         VK_STENCIL_FACE_FLAGS[];
+extern const VkSampleCountFlags         VK_SAMPLE_COUNT_FLAGS[];
 extern const VkAccessFlags              FULL_ACCESS_FLAGS;
 
 } // namespace gfx

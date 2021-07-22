@@ -113,7 +113,7 @@ void cmdFuncCCVKCreateTexture(CCVKDevice *device, CCVKGPUTexture *gpuTexture) {
     if (hasFlag(gpuTexture->usage, TextureUsageBit::SAMPLED)) gpuTexture->aspectMask &= ~VK_IMAGE_ASPECT_STENCIL_BIT;
 
     auto createFn = [device, gpuTexture](VkImage *pVkImage, VmaAllocation *pVmaAllocation) {
-        VkFormat             vkFormat   = mapVkFormat(gpuTexture->format, device->gpuDevice());
+        VkFormat             vkFormat = mapVkFormat(gpuTexture->format, device->gpuDevice());
         VkFormatFeatureFlags features = mapVkFormatFeatureFlags(gpuTexture->usage);
         VkFormatProperties   formatProperties;
         vkGetPhysicalDeviceFormatProperties(device->gpuContext()->physicalDevice, vkFormat, &formatProperties);
@@ -229,9 +229,10 @@ void cmdFuncCCVKCreateSampler(CCVKDevice *device, CCVKGPUSampler *gpuSampler) {
     createInfo.maxAnisotropy    = std::min(maxAnisotropy, static_cast<float>(gpuSampler->maxAnisotropy));
     createInfo.compareEnable    = gpuSampler->cmpFunc != ComparisonFunc::ALWAYS;
     createInfo.compareOp        = VK_CMP_FUNCS[toNumber(gpuSampler->cmpFunc)];
-    createInfo.minLod           = 0.0;               // UNASSIGNED-BestPractices-vkCreateSampler-lod-clamping
-    createInfo.maxLod           = VK_LOD_CLAMP_NONE; // UNASSIGNED-BestPractices-vkCreateSampler-lod-clamping
-    //createInfo.borderColor;
+    // From UNASSIGNED-BestPractices-vkCreateSampler-lod-clamping:
+    // Should use image views with baseMipLevel & levelCount in favor of this
+    createInfo.minLod = 0.0;
+    createInfo.maxLod = VK_LOD_CLAMP_NONE;
 
     VK_CHECK(vkCreateSampler(device->gpuDevice()->vkDevice, &createInfo, nullptr, &gpuSampler->vkSampler));
 }
@@ -315,8 +316,8 @@ void cmdFuncCCVKCreateRenderPass(CCVKDevice *device, CCVKGPURenderPass *gpuRende
         thsvsGetAccessInfo(utils::toUint(endAccesses.size()), endAccesses.data(), &endAccessInfo.stageMask,
                            &endAccessInfo.accessMask, &endAccessInfo.imageLayout, &endAccessInfo.hasWriteAccess);
 
-        VkFormat              vkFormat  = mapVkFormat(attachment.format, device->gpuDevice());
-        VkSampleCountFlagBits samples = device->gpuContext()->getSampleCountForAttachments(attachment.format, vkFormat, attachment.sampleCount);
+        VkFormat              vkFormat = mapVkFormat(attachment.format, device->gpuDevice());
+        VkSampleCountFlagBits samples  = device->gpuContext()->getSampleCountForAttachments(attachment.format, vkFormat, attachment.sampleCount);
 
         attachmentDescriptions[i].format         = vkFormat;
         attachmentDescriptions[i].samples        = samples;
@@ -346,8 +347,8 @@ void cmdFuncCCVKCreateRenderPass(CCVKDevice *device, CCVKGPURenderPass *gpuRende
         thsvsGetAccessInfo(utils::toUint(endAccesses.size()), endAccesses.data(), &endAccessInfo.stageMask,
                            &endAccessInfo.accessMask, &endAccessInfo.imageLayout, &endAccessInfo.hasWriteAccess);
 
-        VkFormat              vkFormat  = mapVkFormat(depthStencilAttachment.format, device->gpuDevice());
-        VkSampleCountFlagBits samples = device->gpuContext()->getSampleCountForAttachments(depthStencilAttachment.format, vkFormat, depthStencilAttachment.sampleCount);
+        VkFormat              vkFormat = mapVkFormat(depthStencilAttachment.format, device->gpuDevice());
+        VkSampleCountFlagBits samples  = device->gpuContext()->getSampleCountForAttachments(depthStencilAttachment.format, vkFormat, depthStencilAttachment.sampleCount);
 
         attachmentDescriptions[colorAttachmentCount].format         = vkFormat;
         attachmentDescriptions[colorAttachmentCount].samples        = samples;
@@ -1427,13 +1428,13 @@ VkSampleCountFlagBits CCVKGPUContext::getSampleCountForAttachments(Format format
 
     VkSampleCountFlags availableSampleCounts = cacheMap[format];
 
-    auto requestedSampleCount = toNumber(sampleCount);
-    if (requestedSampleCount >= 64 && (availableSampleCounts & VK_SAMPLE_COUNT_64_BIT)) return VK_SAMPLE_COUNT_64_BIT;
-    if (requestedSampleCount >= 32 && (availableSampleCounts & VK_SAMPLE_COUNT_32_BIT)) return VK_SAMPLE_COUNT_32_BIT;
-    if (requestedSampleCount >= 16 && (availableSampleCounts & VK_SAMPLE_COUNT_16_BIT)) return VK_SAMPLE_COUNT_16_BIT;
-    if (requestedSampleCount >= 8 && (availableSampleCounts & VK_SAMPLE_COUNT_8_BIT)) return VK_SAMPLE_COUNT_8_BIT;
-    if (requestedSampleCount >= 4 && (availableSampleCounts & VK_SAMPLE_COUNT_4_BIT)) return VK_SAMPLE_COUNT_4_BIT;
-    if (requestedSampleCount >= 2 && (availableSampleCounts & VK_SAMPLE_COUNT_2_BIT)) return VK_SAMPLE_COUNT_2_BIT;
+    auto requestedSampleCount = VK_SAMPLE_COUNT_FLAGS[toNumber(sampleCount)];
+    if (requestedSampleCount & availableSampleCounts & VK_SAMPLE_COUNT_64_BIT) return VK_SAMPLE_COUNT_64_BIT;
+    if (requestedSampleCount & availableSampleCounts & VK_SAMPLE_COUNT_32_BIT) return VK_SAMPLE_COUNT_32_BIT;
+    if (requestedSampleCount & availableSampleCounts & VK_SAMPLE_COUNT_16_BIT) return VK_SAMPLE_COUNT_16_BIT;
+    if (requestedSampleCount & availableSampleCounts & VK_SAMPLE_COUNT_8_BIT) return VK_SAMPLE_COUNT_8_BIT;
+    if (requestedSampleCount & availableSampleCounts & VK_SAMPLE_COUNT_4_BIT) return VK_SAMPLE_COUNT_4_BIT;
+    if (requestedSampleCount & availableSampleCounts & VK_SAMPLE_COUNT_2_BIT) return VK_SAMPLE_COUNT_2_BIT;
 
     return VK_SAMPLE_COUNT_1_BIT;
 }

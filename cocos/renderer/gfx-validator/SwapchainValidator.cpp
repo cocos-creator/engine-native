@@ -40,7 +40,8 @@ SwapchainValidator::SwapchainValidator(Swapchain *actor)
 }
 
 SwapchainValidator::~SwapchainValidator() {
-    destroy();
+    CC_SAFE_DELETE(_depthStencilTexture);
+    CC_SAFE_DELETE(_colorTexture);
 
     DeviceResourceTracker<Swapchain>::erase(this);
     CC_SAFE_DELETE(_actor);

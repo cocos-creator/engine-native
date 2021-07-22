@@ -452,9 +452,9 @@ CC_ENUM_BITWISE_OPERATORS(TextureFlagBit);
 
 enum class SampleCount : uint32_t {
     ONE,                  // Single sample
-    MULTIPLE_PERFORMANCE, // Multiple samples prioritising performance over quality
+    MULTIPLE_PERFORMANCE, // Multiple samples prioritizing performance over quality
     MULTIPLE_BALANCE,     // Multiple samples leveraging both quality and performance
-    MULTIPLE_QUALITY,     // Multiple samples prioritising quality over performance
+    MULTIPLE_QUALITY,     // Multiple samples prioritizing quality over performance
 };
 CC_ENUM_CONVERSION_OPERATOR(SampleCount);
 
