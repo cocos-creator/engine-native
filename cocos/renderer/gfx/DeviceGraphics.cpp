@@ -830,14 +830,11 @@ void DeviceGraphics::commitStencilStates()
 {
     if (_currentState->stencilTest != _nextState->stencilTest)
     {
-        if (!_nextState->stencilTest)
+        if (_nextState->stencilTest)
         {
-            glDisable(GL_STENCIL_TEST);
-            return;
+            glEnable(GL_STENCIL_TEST);
         }
-        
-        glEnable(GL_STENCIL_TEST);
-        
+
         if (_nextState->stencilSeparation)
         {
             GL_CHECK(glStencilFuncSeparate(GL_FRONT,
@@ -869,7 +866,12 @@ void DeviceGraphics::commitStencilStates()
                         ENUM_CLASS_TO_GLENUM(_nextState->stencilZFailOpFront),
                         ENUM_CLASS_TO_GLENUM(_nextState->stencilZPassOpFront)));
         }
-        
+
+        if (!_nextState->stencilTest)
+        {
+            glDisable(GL_STENCIL_TEST);
+        }
+		
         return;
     }
     
