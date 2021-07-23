@@ -25,6 +25,7 @@
 
 #include "scene/Frustum.h"
 #include "scene/Define.h"
+#include "scene/Camera.h"
 
 namespace cc {
 namespace scene {
@@ -122,23 +123,25 @@ void Frustum::update(const Mat4 &m, const Mat4 &inv) {
     }
 }
 
-void Frustum::split(const Mat4 &projection, float near, float far) {
-    const Mat4 projInverse = projection.getInversed();
+void Frustum::split(const Camera *camera, const Mat4 &m, float start, float end) {
 
     // Figure out depth values for near & far
-    const Vec4  nearTemp = projection * Vec4(0.0f, 0.0f, near, 1.0f);
-    const Vec4  farTemp  = projection * Vec4(0.0f, 0.0f, far, 1.0f);
-    const float nearZ    = nearTemp.z / nearTemp.w;
-    const float farZ     = farTemp.z / farTemp.w;
+    const float h = tanf(camera->fov * 0.5F);
+    const float w       = h * camera->aspect;
+    const Vec3 nearTemp(start * w, start * h, start);
+    const Vec3 farTemp(end * w, end * h, end);
 
-    vertices[0] = projInverse * Vec3(1.0f, 1.0f, nearZ);
-    vertices[1] = projInverse * Vec3(-1.0f, 1.0f, nearZ);
-    vertices[2] = projInverse * Vec3(-1.0f, -1.0f, nearZ);
-    vertices[3] = projInverse * Vec3(1.0f, -1.0f, nearZ);
-    vertices[4] = projInverse * Vec3(1.0f, 1.0f, farZ);
-    vertices[5] = projInverse * Vec3(-1.0f, 1.0f, farZ);
-    vertices[6] = projInverse * Vec3(-1.0f, -1.0f, farZ);
-    vertices[7] = projInverse * Vec3(1.0f, -1.0f, farZ);
+    // startHalfWidth startHalfHeight
+    vertices[0] = m * Vec3(nearTemp.x, nearTemp.y, nearTemp.z);
+    vertices[1] = m * Vec3(-nearTemp.x, nearTemp.y, nearTemp.z);
+    vertices[2] = m * Vec3(-nearTemp.x, -nearTemp.y, nearTemp.z);
+    vertices[3] = m * Vec3(nearTemp.x, -nearTemp.y, nearTemp.z);
+
+    // endHalfWidth, endHalfHeight
+    vertices[4] = m * Vec3(nearTemp.x, nearTemp.y, nearTemp.z);
+    vertices[5] = m * Vec3(-nearTemp.x, nearTemp.y, nearTemp.z);
+    vertices[6] = m * Vec3(-nearTemp.x, -nearTemp.y, nearTemp.z);
+    vertices[7] = m * Vec3(nearTemp.x, -nearTemp.y, nearTemp.z);
 
     updatePlanes();
 }
@@ -170,19 +173,19 @@ void Frustum::updatePlanes() {
     // far plane
     planes[PLANE_FAR].define(vertices[7], vertices[6], vertices[5]);
 
-    if (type != ShapeEnums::SHAPE_FRUSTUM_ACCURATE) {
-        return;
-    }
+    //if (type != ShapeEnums::SHAPE_FRUSTUM_ACCURATE) {
+    //    return;
+    //}
 
     // Check if we ended up with inverted planes (reflected transform) and flip in that case
-    planes[PLANE_NEAR].define(planes[PLANE_FAR].n.getNegate(), vertices[2]);
+    //planes[PLANE_NEAR].define(planes[PLANE_FAR].n.getNegate(), vertices[2]);
 
-    if (planes[PLANE_NEAR].distance(vertices[5]) < 0.0f) {
-        for (auto& plane : planes) {
-            plane.n = -plane.n;
-            plane.d = -plane.d;
-        }
-    }
+    //if (planes[PLANE_NEAR].distance(vertices[5]) < 0.0f) {
+    //    for (auto& plane : planes) {
+    //        plane.n = -plane.n;
+    //        plane.d = -plane.d;
+    //    }
+    //}
 }
 
 } // namespace scene

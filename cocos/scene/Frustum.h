@@ -31,6 +31,7 @@
 
 namespace cc {
 namespace scene {
+struct Camera;
 enum class ShapeEnums {
     SHAPE_RAY              = (1 << 0),
     SHAPE_LINE             = (1 << 1),
@@ -70,7 +71,7 @@ struct Frustum final {
     void                 define(const Vec3 &near, const Vec3 &far, const Mat4 &transform);
     void                 defineOrtho(float orthoSize, float aspectRatio, float nearZ, float farZ, const Mat4 &transform);
     void                 update(const Mat4 &m, const Mat4 &inv);
-    void                 split(const Mat4 &projection, float near, float far);
+    void                 split(const Camera *camera, const Mat4 &m, float start, float end);
     void                 updatePlanes();
     void                 zero();
     ShapeEnums           type{ShapeEnums::SHAPE_FRUSTUM};

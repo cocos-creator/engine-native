@@ -54,16 +54,14 @@ void PipelineUBO::quantizeDirLightShadowCamera(const RenderPipeline *pipeline, s
     scene::Shadow *const                 shadowInfo           = sceneData->getSharedData()->shadow;
     std::array<float, UBOShadow::COUNT> &shadowUBO            = *bufferView;
     const float                          shadowMapWidth       = shadowInfo->size.x;
-    scene::Sphere                        cameraBoundingSphere = shadowInfo->cameraBoundingSphere;
+    const scene::Sphere                  cameraBoundingSphere = shadowInfo->cameraBoundingSphere;
     const float                          radius               = cameraBoundingSphere.getRadius();
-    const Vec3                           center               = cameraBoundingSphere.getCenter();
+    const Vec3                           position               = cameraBoundingSphere.getCenter();
     const Quaternion                     rotation             = mainLight->getNode()->getWorldRotation();
     const float                          range                = shadowInfo->range;
-    const Vec3                           direction            = rotation * Vec3::FORWARD;
-    const Vec3                           lightViewCenter      = direction * range + Vec3::ZERO;
 
     Mat4 matLightWorldTrans;
-    Mat4::fromRT(rotation, lightViewCenter, &matLightWorldTrans);
+    Mat4::fromRT(rotation, Vec3::ZERO, &matLightWorldTrans);
 
     Mat4 matLightWorldTransInv;
 
@@ -74,9 +72,9 @@ void PipelineUBO::quantizeDirLightShadowCamera(const RenderPipeline *pipeline, s
 
     if (shadowMapWidth > 0.0F) {
         matLightWorldTransInv     = matLightWorldTrans.getInversed();
-        matLightViewProj          = matLightWorldTransInv * matLightProj;
+        matLightViewProj      = matLightProj * matLightWorldTransInv;
 
-        const Vec3  projPos       = matLightViewProj * center;
+        const Vec3  projPos       = matLightViewProj * position;
         const float invActualSize = 2.0F / shadowMapWidth;
         const Vec2  texelSize(invActualSize, invActualSize);
         const Vec3  projSnap(projPos.x - fmodf(projPos.x, texelSize.x), projPos.y - fmodf(projPos.y, texelSize.y), projPos.z);
