@@ -42,6 +42,7 @@ class RenderPipeline;
 RenderObject genRenderObject(const scene::Model *, const scene::Camera *);
 
 void lightCollecting(scene::Camera *, std::vector<const scene::Light *> *);
+Mat4 getCameraWorldMatrix(const scene::Camera *camera);
 void sceneCulling(RenderPipeline *, scene::Camera *);
 void updateSphereLight(scene::Shadow *shadows, const scene::Light *light, std::array<float, UBOShadow::COUNT> *);
 void updateDirLight(scene::Shadow *shadows, const scene::Light *light, std::array<float, UBOShadow::COUNT> *);

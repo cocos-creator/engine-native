@@ -26,6 +26,7 @@
 #include "scene/SkinningModel.h"
 
 #include <utility>
+#include <array>
 
 namespace cc {
 namespace scene {

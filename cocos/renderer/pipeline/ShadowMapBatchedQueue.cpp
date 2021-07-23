@@ -48,14 +48,14 @@ ShadowMapBatchedQueue::ShadowMapBatchedQueue(RenderPipeline *pipeline)
     _batchedQueue   = CC_NEW(RenderBatchedQueue);
 }
 
-void ShadowMapBatchedQueue::gatherLightPasses(const scene::Light *light, gfx::CommandBuffer *cmdBuffer) {
+void ShadowMapBatchedQueue::gatherLightPasses(const scene::Light *light, gfx::CommandBuffer *cmdBuffer, const cc::scene::Camera* camera) {
     clear();
 
     const auto *sceneData     = _pipeline->getPipelineSceneData();
     const auto *shadowInfo    = sceneData->getSharedData()->shadow;
     const auto &shadowObjects = sceneData->getShadowObjects();
     if (light && shadowInfo->enabled && shadowInfo->shadowType == scene::ShadowType::SHADOWMAP) {
-        _pipeline->getPipelineUBO()->updateShadowUBOLight(light);
+        _pipeline->getPipelineUBO()->updateShadowUBOLight(light, camera);
 
         for (const auto ro : shadowObjects) {
             const auto *model = ro.model;

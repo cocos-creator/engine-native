@@ -26,6 +26,8 @@
 #include "renderer/pipeline/Define.h"
 #include "scene/SubModel.h"
 
+#include <array>
+
 namespace cc {
 namespace scene {
 void Model::uploadMat4AsVec4x3(const Mat4 &mat, float *v1, float *v2, float *v3) {
