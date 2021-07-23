@@ -243,7 +243,7 @@ public:
     uint                         queueFamilyIndex = 0U;
     vector<uint>                 possibleQueueFamilyIndices;
     vector<VkSemaphore>          lastSignaledSemaphores;
-    VkPipelineStageFlags         submitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    vector<VkPipelineStageFlags> submitStageMasks;
     CachedArray<VkCommandBuffer> commandBuffers;
 };
 
@@ -369,8 +369,8 @@ public:
     VkPipelineCache               vkPipelineCache{VK_NULL_HANDLE};
     uint                          minorVersion{0U};
 
-    VkFormat                      depthFormat{VK_FORMAT_UNDEFINED};
-    VkFormat                      depthStencilFormat{VK_FORMAT_UNDEFINED};
+    VkFormat depthFormat{VK_FORMAT_UNDEFINED};
+    VkFormat depthStencilFormat{VK_FORMAT_UNDEFINED};
 
     uint curBackBufferIndex{0U};
     uint backBufferCount{3U};

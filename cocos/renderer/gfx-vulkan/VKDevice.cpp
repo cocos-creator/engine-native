@@ -39,13 +39,10 @@
 #include "VKRenderPass.h"
 #include "VKSampler.h"
 #include "VKShader.h"
+#include "VKSwapchain.h"
 #include "VKTexture.h"
 #include "VKTextureBarrier.h"
 #include "VKUtils.h"
-#include "base/Utils.h"
-#include "gfx-vulkan/VKGPUObjects.h"
-#include "gfx-vulkan/VKSwapchain.h"
-#include "vulkan/vulkan_core.h"
 
 CC_DISABLE_WARNINGS()
 #define VMA_IMPLEMENTATION
@@ -566,10 +563,8 @@ void CCVKDevice::acquire(Swapchain *const *swapchains, uint32_t count) {
         gpuSwapchains[i]->curImageIndex = vkSwapchainIndices[i];
         queue->gpuQueue()->lastSignaledSemaphores.push_back(acquireSemaphore);
 
-#if !defined(VK_USE_PLATFORM_METAL_EXT)
-        // MoltenVK seems to be not consistent on this index
-        CCASSERT(_gpuDevice->curBackBufferIndex == vkSwapchainIndices[i], "wrong image index?");
-#endif // defined(VK_USE_PLATFORM_METAL_EXT)
+        // We allow different swapchain indices
+        //CCASSERT(_gpuDevice->curBackBufferIndex == vkSwapchainIndices[i], "wrong image index?");
     }
 }
 

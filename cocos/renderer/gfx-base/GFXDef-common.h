@@ -443,9 +443,9 @@ CC_ENUM_BITWISE_OPERATORS(TextureUsageBit);
 
 enum class TextureFlagBit : uint32_t {
     NONE           = 0,
-    GEN_MIPMAP     = 0x1,
-    IMMUTABLE      = 0x2,
-    GENERAL_LAYOUT = 0x4,
+    GEN_MIPMAP     = 0x1, // Generate mipmaps using bilinear filter
+    RESIZABLE      = 0x2, // Make the texture resizable, should be avoided whenever possible
+    GENERAL_LAYOUT = 0x4, // For inout framebuffer attachments
 };
 using TextureFlags = TextureFlagBit;
 CC_ENUM_BITWISE_OPERATORS(TextureFlagBit);
@@ -899,7 +899,7 @@ struct BindingMappingInfo {
 
 struct SwapchainInfo {
     void *      windowHandle = nullptr; // @ts-overrides { type: 'HTMLCanvasElement' }
-    VsyncMode   vsyncMode    = VsyncMode::RELAXED;
+    VsyncMode   vsyncMode    = VsyncMode::MAILBOX;
     SampleCount samples      = SampleCount::ONE;
 
     uint32_t width  = 0U;

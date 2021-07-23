@@ -76,6 +76,7 @@ void TextureValidator::doDestroy() {
 }
 
 void TextureValidator::doResize(uint width, uint height, uint /*size*/) {
+    CCASSERT(hasFlag(_flags, TextureFlagBit::RESIZABLE), "Cannot resize immutable textures");
     CCASSERT(!_isTextureView, "Cannot resize texture views");
 
     _actor->resize(width, height);

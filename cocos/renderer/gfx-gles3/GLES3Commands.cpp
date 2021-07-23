@@ -90,12 +90,8 @@ GLenum mapGLInternalFormat(Format format) {
         case Format::RGB10A2: return GL_RGB10_A2;
         case Format::RGB10A2UI: return GL_RGB10_A2UI;
         case Format::R11G11B10F: return GL_R11F_G11F_B10F;
-        case Format::D16: return GL_DEPTH_COMPONENT16;
-        case Format::D16S8: return GL_DEPTH24_STENCIL8;
-        case Format::D24: return GL_DEPTH_COMPONENT24;
-        case Format::D24S8: return GL_DEPTH24_STENCIL8;
-        case Format::D32F: return GL_DEPTH_COMPONENT32F;
-        case Format::D32F_S8: return GL_DEPTH32F_STENCIL8;
+        case Format::DEPTH: return GL_DEPTH_COMPONENT32F;
+        case Format::DEPTH_STENCIL: return GL_DEPTH32F_STENCIL8;
 
         case Format::BC1: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
         case Format::BC1_ALPHA: return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
@@ -215,12 +211,8 @@ GLenum mapGLFormat(Format format) {
         case Format::RGBA4: return GL_RGBA;
         case Format::SRGB8: return GL_SRGB_EXT;
         case Format::SRGB8_A8: return GL_SRGB_ALPHA_EXT;
-        case Format::D16: return GL_DEPTH_COMPONENT;
-        case Format::D16S8: return GL_DEPTH_STENCIL;
-        case Format::D24: return GL_DEPTH_COMPONENT;
-        case Format::D24S8: return GL_DEPTH_STENCIL;
-        case Format::D32F: return GL_DEPTH_COMPONENT;
-        case Format::D32F_S8: return GL_DEPTH_STENCIL;
+        case Format::DEPTH: return GL_DEPTH_COMPONENT;
+        case Format::DEPTH_STENCIL: return GL_DEPTH_STENCIL;
 
         case Format::BC1: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
         case Format::BC1_ALPHA: return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
@@ -415,12 +407,8 @@ GLenum formatToGLType(Format format) {
         case Format::RGB10A2UI: return GL_UNSIGNED_INT_2_10_10_10_REV;
         case Format::RGB9E5: return GL_FLOAT;
 
-        case Format::D16: return GL_UNSIGNED_SHORT;
-        case Format::D16S8: return GL_UNSIGNED_INT_24_8; // no D16S8 support
-        case Format::D24: return GL_UNSIGNED_INT;
-        case Format::D24S8: return GL_UNSIGNED_INT_24_8;
-        case Format::D32F: return GL_FLOAT;
-        case Format::D32F_S8: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+        case Format::DEPTH: return GL_FLOAT;
+        case Format::DEPTH_STENCIL: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
 
         case Format::BC1:
         case Format::BC1_SRGB:
@@ -620,6 +608,17 @@ const GLenum GL_MEMORY_ACCESS[] = {
     GL_READ_ONLY,
     GL_WRITE_ONLY,
     GL_READ_WRITE,
+};
+
+const GLint GL_SAMPLE_COUNT[] = {
+    1,
+    2,
+#if CC_PLATFORM == CC_PLATFORM_ANDROID || CC_PLATFORM == CC_PLATFORM_MAC_IOS
+    4,
+#else
+    8,
+#endif
+    16,
 };
 } // namespace
 
@@ -850,7 +849,7 @@ void cmdFuncGLES3CreateTexture(GLES3Device *device, GLES3GPUTexture *gpuTexture)
         supportedSampleCounts.resize(supportedSampleCountCount);
         GL_CHECK(glGetInternalformativ(GL_RENDERBUFFER, gpuTexture->glInternalFmt, GL_SAMPLES, supportedSampleCountCount, supportedSampleCounts.data()));
 
-        auto requestedSampleCount = static_cast<GLint>(gpuTexture->samples);
+        auto requestedSampleCount = GL_SAMPLE_COUNT[toNumber(gpuTexture->samples)];
         for (GLint sampleCount : supportedSampleCounts) {
             if (sampleCount <= requestedSampleCount) {
                 gpuTexture->glSamples = sampleCount;
@@ -889,9 +888,7 @@ void cmdFuncGLES3CreateTexture(GLES3Device *device, GLES3GPUTexture *gpuTexture)
                     }
                     uint w = gpuTexture->width;
                     uint h = gpuTexture->height;
-                    if (hasFlag(gpuTexture->flags, TextureFlagBit::IMMUTABLE)) {
-                        GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, gpuTexture->mipLevel, gpuTexture->glInternalFmt, w, h));
-                    } else {
+                    if (hasFlag(gpuTexture->flags, TextureFlagBit::RESIZABLE)) {
                         if (!GFX_FORMAT_INFOS[toNumber(gpuTexture->format)].isCompressed) {
                             for (uint i = 0; i < gpuTexture->mipLevel; ++i) {
                                 GL_CHECK(glTexImage2D(GL_TEXTURE_2D, i, gpuTexture->glInternalFmt, w, h, 0, gpuTexture->glFormat, gpuTexture->glType, nullptr));
@@ -906,6 +903,8 @@ void cmdFuncGLES3CreateTexture(GLES3Device *device, GLES3GPUTexture *gpuTexture)
                                 h = std::max(1U, h >> 1);
                             }
                         }
+                    } else {
+                        GL_CHECK(glTexStorage2D(GL_TEXTURE_2D, gpuTexture->mipLevel, gpuTexture->glInternalFmt, w, h));
                     }
                 }
                 break;
@@ -921,9 +920,7 @@ void cmdFuncGLES3CreateTexture(GLES3Device *device, GLES3GPUTexture *gpuTexture)
                     }
                     uint w = gpuTexture->width;
                     uint h = gpuTexture->height;
-                    if (hasFlag(gpuTexture->flags, TextureFlagBit::IMMUTABLE)) {
-                        GL_CHECK(glTexStorage2D(GL_TEXTURE_CUBE_MAP, gpuTexture->mipLevel, gpuTexture->glInternalFmt, w, h));
-                    } else {
+                    if (hasFlag(gpuTexture->flags, TextureFlagBit::RESIZABLE)) {
                         if (!GFX_FORMAT_INFOS[toNumber(gpuTexture->format)].isCompressed) {
                             for (uint i = 0; i < gpuTexture->mipLevel; ++i) {
                                 for (uint f = 0; f < 6; ++f) {
@@ -942,6 +939,8 @@ void cmdFuncGLES3CreateTexture(GLES3Device *device, GLES3GPUTexture *gpuTexture)
                                 h = std::max(1U, h >> 1);
                             }
                         }
+                    } else {
+                        GL_CHECK(glTexStorage2D(GL_TEXTURE_CUBE_MAP, gpuTexture->mipLevel, gpuTexture->glInternalFmt, w, h));
                     }
                 }
                 break;
@@ -1571,7 +1570,7 @@ static GLuint doCreateFramebuffer(GLES3Device *                    device,
         GLenum glAttachment = hasStencil ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
         if (depthStencil->glTexture) {
             GL_CHECK(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, glAttachment, depthStencil->glTarget, depthStencil->glTexture, 0));
-        } else if(depthStencil->glRenderbuffer) {
+        } else if (depthStencil->glRenderbuffer) {
             GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, glAttachment, depthStencil->glTarget, depthStencil->glRenderbuffer));
         }
 
@@ -2810,8 +2809,8 @@ void cmdFuncGLES3CopyBuffersToTexture(GLES3Device *device, const uint8_t *const 
 }
 
 CC_GLES3_API void cmdFuncGLES3CopyTextureToBuffers(GLES3Device *device, GLES3GPUTexture *gpuTexture, uint8_t *const *buffers, const BufferTextureCopy *regions, uint count) {
-    auto   glFormat    = mapGLFormat(gpuTexture->format);
-    auto   glType      = formatToGLType(gpuTexture->format);
+    auto glFormat = mapGLFormat(gpuTexture->format);
+    auto glType   = formatToGLType(gpuTexture->format);
     for (uint32_t i = 0; i < count; ++i) {
         auto     region      = regions[i];
         auto     w           = region.texExtent.width;
@@ -2843,14 +2842,14 @@ void cmdFuncGLES3BlitTexture(GLES3Device *device, GLES3GPUTexture *gpuTextureSrc
         const TextureBlit &region = regions[i];
 
         GLuint srcFramebuffer = gpuTextureSrc || gpuTextureSrc->glTexture != 0 || gpuTextureSrc->glRenderbuffer != 0 ? device->framebufferCacheMap()->getFramebufferFromTexture(gpuTextureSrc, region.srcSubres)
-                                              : device->constantRegistry()->defaultFramebuffer;
+                                                                                                                     : device->constantRegistry()->defaultFramebuffer;
         if (cache->glReadFramebuffer != srcFramebuffer) {
             GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, srcFramebuffer));
             cache->glReadFramebuffer = srcFramebuffer;
         }
 
         GLuint dstFramebuffer = gpuTextureSrc || gpuTextureSrc->glTexture != 0 || gpuTextureSrc->glRenderbuffer != 0 ? device->framebufferCacheMap()->getFramebufferFromTexture(gpuTextureDst, region.dstSubres)
-                                              : device->constantRegistry()->defaultFramebuffer;
+                                                                                                                     : device->constantRegistry()->defaultFramebuffer;
         if (cache->glDrawFramebuffer != dstFramebuffer) {
             GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstFramebuffer));
             cache->glDrawFramebuffer = dstFramebuffer;

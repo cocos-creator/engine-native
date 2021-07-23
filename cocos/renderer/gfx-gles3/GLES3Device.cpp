@@ -47,7 +47,7 @@
 #include "gfx-gles-common/GLESCommandPool.h"
 
 // when capturing GLES commands (RENDERDOC_HOOK_EGL=1, default value)
-// renderdoc doesn't support this extension during replay
+// RenderDoc doesn't support this extension during replay
 #define ALLOW_MULTISAMPLED_RENDER_TO_TEXTURE_ON_DESKTOP 0
 
 namespace cc {
@@ -156,9 +156,10 @@ void GLES3Device::acquire(Swapchain *const *swapchains, uint32_t count) {
             _currentSwapchain = static_cast<GLES3Swapchain *>(swapchains[0]);
             auto *context     = _currentSwapchain->getContext();
             context->makeCurrent();
+            _gpuStateCache->reset();
         }
     } else if (count > 1) {
-        CC_LOG_ERROR("OpenGL ES Does not support obtaining multiple swapchains at the same time");
+        CC_LOG_ERROR("OpenGL ES does not support obtaining multiple swapchains at the same time");
     }
 }
 
@@ -254,11 +255,12 @@ Swapchain *GLES3Device::createSwapchain() {
 }
 
 void GLES3Device::onSwapchainCreated(GLES3Swapchain *swapchain) {
-    bool needInit = _swapchains.empty();
     _swapchains.insert(swapchain);
-    if (needInit) {
+
+    if (!_currentSwapchain) {
         auto *context = static_cast<GLES3Swapchain *>(swapchain)->getContext();
         initByContext(context);
+        _currentSwapchain = swapchain;
     }
 }
 
@@ -352,8 +354,6 @@ void GLES3Device::initByPBuffer() {
 }
 
 void GLES3Device::initByContext(GLES3Context *context) {
-    context->makeCurrent(false);
-
     _gpuStateCache          = CC_NEW(GLES3GPUStateCache);
     _gpuStagingBufferPool   = CC_NEW(GLES3GPUStagingBufferPool);
     _gpuConstantRegistry    = CC_NEW(GLES3GPUConstantRegistry);
