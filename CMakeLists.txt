@@ -1900,6 +1900,12 @@ cocos_source_files(
                  extensions/ExtensionMacros.h
 )
 
+if(USE_VR)
+    cocos_source_files(
+        cocos/vr/VRContext.cpp cocos/vr/VRContext.h
+    )
+endif()
+
 list(APPEND COCOS2D_SOURCE_LIST ${CC_EXTERNAL_SOURCES})
 
 add_library(cocos2d ${COCOS2D_SOURCE_LIST})
