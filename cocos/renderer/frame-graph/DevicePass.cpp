@@ -153,17 +153,17 @@ void DevicePass::begin(gfx::CommandBuffer *cmdBuff) {
         gfx::Texture *attachment = attachElem.renderTarget;
         if (attachElem.attachment.desc.usage == RenderTargetAttachment::Usage::COLOR) {
             rpInfo.colorAttachments.emplace_back();
-            rpInfo.colorAttachments.back().format        = attachment ? attachment->getFormat() : gfx::Device::getInstance()->getColorFormat();
+            rpInfo.colorAttachments.back().format        = attachment->getFormat();
             rpInfo.colorAttachments.back().loadOp        = attachElem.attachment.desc.loadOp;
             rpInfo.colorAttachments.back().storeOp       = attachElem.attachment.storeOp;
             rpInfo.colorAttachments.back().beginAccesses = attachElem.attachment.desc.beginAccesses;
             rpInfo.colorAttachments.back().endAccesses   = attachElem.attachment.desc.endAccesses;
             fboInfo.colorTextures.push_back(attachElem.renderTarget);
             clearColors.emplace_back(attachElem.attachment.desc.clearColor);
-            _viewport.width = _scissor.width = attachment ? attachment->getWidth() : gfx::Device::getInstance()->getWidth();
-            _viewport.height = _scissor.height = attachment ? attachment->getHeight() : gfx::Device::getInstance()->getHeight();
+            _viewport.width = _scissor.width = attachment->getWidth();
+            _viewport.height = _scissor.height = attachment->getHeight();
         } else {
-            rpInfo.depthStencilAttachment.format         = attachment ? attachment->getFormat() : gfx::Device::getInstance()->getDepthStencilFormat();
+            rpInfo.depthStencilAttachment.format         = attachment->getFormat();
             rpInfo.depthStencilAttachment.depthLoadOp    = attachElem.attachment.desc.loadOp;
             rpInfo.depthStencilAttachment.depthStoreOp   = attachElem.attachment.storeOp;
             rpInfo.depthStencilAttachment.stencilLoadOp  = attachElem.attachment.desc.loadOp;

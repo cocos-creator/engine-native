@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2019-2021 Xiamen Yaji Software Co., Ltd.
+ Copyright (c) 2020-2021 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos.com
 
@@ -23,27 +23,28 @@
  THE SOFTWARE.
 ****************************************************************************/
 
-#include "base/CoreStd.h"
+#pragma once
 
-#include "GFXContext.h"
+#include "base/Agent.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
 
-Context::Context() = default;
+class CC_DLL SwapchainValidator final : public Agent<Swapchain> {
+public:
+    explicit SwapchainValidator(Swapchain *actor);
+    ~SwapchainValidator() override;
 
-Context::~Context() = default;
+    SurfaceTransform getSurfaceTransform() const override { return _actor->getSurfaceTransform(); }
 
-bool Context::initialize(const ContextInfo& info) {
-    _vsyncMode    = info.vsyncMode;
-    _windowHandle = info.windowHandle;
-
-    return doInit(info);
-}
-
-void Context::destroy() {
-    doDestroy();
-}
+protected:
+    void doInit(const SwapchainInfo &info) override;
+    void doDestroy() override;
+    void doResize(uint32_t width, uint32_t height) override;
+    void doDestroySurface() override;
+    void doCreateSurface(void *windowHandle) override;
+};
 
 } // namespace gfx
 } // namespace cc

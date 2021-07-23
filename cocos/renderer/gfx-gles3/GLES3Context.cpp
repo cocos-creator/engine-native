@@ -88,9 +88,17 @@ void GL_APIENTRY GLES3EGLDebugProc(GLenum source, GLenum type, GLuint id, GLenum
 GLES3Context::GLES3Context()  = default;
 GLES3Context::~GLES3Context() = default;
 
+bool GLES3Context::init(const GLES3ContextInfo &info) {
+    return doInit(info);
+}
+
+void GLES3Context::destroy() {
+    doDestroy();
+}
+
 #if (CC_PLATFORM == CC_PLATFORM_WINDOWS || CC_PLATFORM == CC_PLATFORM_ANDROID || CC_PLATFORM == CC_PLATFORM_MAC_OSX || CC_PLATFORM == CC_PLATFORM_OHOS)
 
-bool GLES3Context::doInit(const ContextInfo &info) {
+bool GLES3Context::doInit(const GLES3ContextInfo &info) {
     _vsyncMode    = info.vsyncMode;
     _windowHandle = info.windowHandle;
     auto *window  = reinterpret_cast<EGLNativeWindowType>(_windowHandle); // NOLINT(performance-no-int-to-ptr)
@@ -98,10 +106,6 @@ bool GLES3Context::doInit(const ContextInfo &info) {
     //////////////////////////////////////////////////////////////////////////
 
     if (!info.sharedCtx) {
-        if (!gles3wInit()) {
-            return false;
-        }
-
         _isPrimaryContex = true;
         _windowHandle    = info.windowHandle;
 
@@ -110,14 +114,8 @@ bool GLES3Context::doInit(const ContextInfo &info) {
         if (!_nativeDisplay) {
             return false;
         }
-
-        EGL_CHECK(_eglDisplay = eglGetDisplay(_nativeDisplay));
-        if (_eglDisplay == EGL_NO_DISPLAY) {
-            EGL_CHECK(_eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY));
-        }
-    #else
-        EGL_CHECK(_eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY));
     #endif
+        EGL_CHECK(_eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY));
 
         // If a display still couldn't be obtained, return an error.
         if (_eglDisplay == EGL_NO_DISPLAY) {
@@ -125,20 +123,12 @@ bool GLES3Context::doInit(const ContextInfo &info) {
             return false;
         }
 
-        EGLint major = 0;
-        EGLint minor = 0;
-        if (eglInitialize(_eglDisplay, &major, &minor) != EGL_TRUE) {
-            CC_LOG_ERROR("Couldn't initialize EGLDisplay.");
-            return false;
-        }
-
         // Make OpenGL ES the current API.
         // EGL needs a way to know that any subsequent EGL calls are going to be affecting OpenGL ES,
         // rather than any other API (such as OpenVG).
-        EGL_CHECK(eglBindAPI(EGL_OPENGL_ES_API));
 
         _colorFmt        = Format::RGBA8;
-        _depthStencilFmt = Format::D24S8;
+        _depthStencilFmt = Format::DEPTH_STENCIL;
 
         bool   msaaEnabled = info.msaaEnabled;
         EGLint redSize{8};
@@ -186,7 +176,7 @@ bool GLES3Context::doInit(const ContextInfo &info) {
         const uint8_t attrNums         = 8;
         int           params[attrNums] = {0};
         bool          matched          = false;
-        const bool    qualityPreferred = info.performance == Performance::HIGH_QUALITY;
+        const bool    qualityPreferred = true; //info.performance == Performance::HIGH_QUALITY;
         uint64_t      lastScore        = qualityPreferred ? std::numeric_limits<uint64_t>::min() : std::numeric_limits<uint64_t>::max();
 
         for (int i = 0; i < numConfig; i++) {
@@ -242,26 +232,9 @@ bool GLES3Context::doInit(const ContextInfo &info) {
 
         CC_LOG_INFO("Setup EGLConfig: depth [%d] stencil [%d] sampleBuffer [%d] sampleCount [%d]", depth, stencil, _sampleBuffers, _sampleCount);
 
-        if (depth == 16 && stencil == 0) {
-            _depthStencilFmt = Format::D16;
-        } else if (depth == 16 && stencil == 8) {
-            _depthStencilFmt = Format::D16S8;
-        } else if (depth == 24 && stencil == 0) {
-            _depthStencilFmt = Format::D24;
-        } else if (depth == 24 && stencil == 8) {
-            _depthStencilFmt = Format::D24S8;
-        } else if (depth == 32 && stencil == 0) {
-            _depthStencilFmt = Format::D32F;
-        } else if (depth == 32 && stencil == 8) {
-            _depthStencilFmt = Format::D32F_S8;
-        } else {
-            CC_LOG_ERROR("Unknown depth stencil format.");
-            return false;
+        if (stencil == 0) {
+            _depthStencilFmt = Format::DEPTH;
         }
-
-        CC_LOG_INFO("Chosen EGLConfig: color [%s], depth stencil [%s].",
-                    GFX_FORMAT_INFOS[static_cast<uint>(_colorFmt)].name.c_str(),
-                    GFX_FORMAT_INFOS[static_cast<uint>(_depthStencilFmt)].name.c_str());
 
         /* EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
          * guaranteed to be accepted by ANativeWindow_setBuffersGeometry().
@@ -431,7 +404,7 @@ void GLES3Context::doDestroy() {
     _isInitialized   = false;
 }
 
-void GLES3Context::releaseSurface(uintptr_t /*windowHandle*/) {
+void GLES3Context::releaseSurface() {
     #if (CC_PLATFORM == CC_PLATFORM_ANDROID || CC_PLATFORM == CC_PLATFORM_OHOS)
     if (_eglSurface != EGL_NO_SURFACE) {
         eglDestroySurface(_eglDisplay, _eglSurface);

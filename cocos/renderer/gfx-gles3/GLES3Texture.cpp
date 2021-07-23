@@ -92,5 +92,41 @@ void GLES3Texture::doResize(uint width, uint height, uint size) {
     }
 }
 
+void GLES3Texture::doInit(const SwapchainTextureInfo& info) {
+    _type   = TextureType::TEX2D;
+    _format = info.format;
+    _usage  = TextureUsage::TRANSFER_DST | TextureUsage::COLOR_ATTACHMENT;
+    _width  = info.width;
+    _height = info.height;
+    _size       = formatSize(_format, _width, _height, _depth);
+
+    _gpuTexture = CC_NEW(GLES3GPUTexture);
+    _gpuTexture->type           = TextureType::TEX2D;
+    _gpuTexture->format         = info.format;
+    _gpuTexture->usage          = TextureUsageBit::NONE;
+    _gpuTexture->width          = _width;
+    _gpuTexture->height         = _height;
+    _gpuTexture->depth          = 1;
+    _gpuTexture->size           = 0;
+    _gpuTexture->arrayLayer     = 1;
+    _gpuTexture->mipLevel       = 1;
+    _gpuTexture->samples        = SampleCount::ONE;
+    _gpuTexture->flags          = TextureFlagBit::NONE;
+    _gpuTexture->isPowerOf2     = false;
+    _gpuTexture->memoryless     = true;
+    _gpuTexture->glTarget       = 0;
+    _gpuTexture->glInternalFmt  = 0;
+    _gpuTexture->glFormat       = 0;
+    _gpuTexture->glType         = 0;
+    _gpuTexture->glUsage        = 0;
+    _gpuTexture->glSamples      = 0;
+    _gpuTexture->glTexture      = 0;
+    _gpuTexture->glRenderbuffer = 0;
+    _gpuTexture->glWrapS        = 0;
+    _gpuTexture->glWrapT        = 0;
+    _gpuTexture->glMinFilter    = 0;
+    _gpuTexture->glMagFilter    = 0;
+}
+
 } // namespace gfx
 } // namespace cc

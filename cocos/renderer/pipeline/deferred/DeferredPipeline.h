@@ -52,11 +52,11 @@ public:
 
     bool initialize(const RenderPipelineInfo &info) override;
     void destroy() override;
-    bool activate() override;
+    bool activate(gfx::Swapchain *swapchain) override;
     void render(const vector<scene::Camera *> &cameras) override;
     void resize(uint width, uint height) override;
 
-    gfx::RenderPass *getOrCreateRenderPass(gfx::ClearFlags clearFlags);
+    gfx::RenderPass *getOrCreateRenderPass(gfx::ClearFlags clearFlags, gfx::Swapchain *swapchain);
 
     inline gfx::Buffer *          getLightsUBO() const { return _lightsUBO; }
     inline const LightList &      getValidLights() const { return _validLights; }
@@ -70,7 +70,7 @@ public:
     void                          genQuadVertexData(gfx::SurfaceTransform surfaceTransform, const gfx::Rect &renderArea, float *data);
 
 private:
-    bool activeRenderer();
+    bool activeRenderer(gfx::Swapchain *swapchain);
     bool createQuadInputAssembler(gfx::Buffer **quadIB, gfx::Buffer **quadVB, gfx::InputAssembler **quadIA);
     void destroyQuadInputAssembler();
     void destroyDeferredData();

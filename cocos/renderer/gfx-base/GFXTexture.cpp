@@ -26,7 +26,6 @@
 #include "base/CoreStd.h"
 
 #include "GFXDevice.h"
-#include "GFXObject.h"
 #include "GFXTexture.h"
 
 namespace cc {
@@ -72,29 +71,39 @@ void Texture::initialize(const TextureInfo &info) {
 void Texture::initialize(const TextureViewInfo &info) {
     _isTextureView = true;
 
-    _type          = info.texture->getType();
-    _format        = info.format;
-    _baseLayer     = info.baseLayer;
-    _layerCount    = info.layerCount;
-    _baseLevel     = info.baseLevel;
-    _levelCount    = info.levelCount;
-    _usage         = info.texture->getUsage();
-    _width         = info.texture->getWidth();
-    _height        = info.texture->getHeight();
-    _depth         = info.texture->getDepth();
-    _samples       = info.texture->getSamples();
-    _flags         = info.texture->getFlags();
-    _size          = formatSize(_format, _width, _height, _depth);
-    _isTextureView = true;
+    _type       = info.texture->getType();
+    _format     = info.format;
+    _baseLayer  = info.baseLayer;
+    _layerCount = info.layerCount;
+    _baseLevel  = info.baseLevel;
+    _levelCount = info.levelCount;
+    _usage      = info.texture->getUsage();
+    _width      = info.texture->getWidth();
+    _height     = info.texture->getHeight();
+    _depth      = info.texture->getDepth();
+    _samples    = info.texture->getSamples();
+    _flags      = info.texture->getFlags();
+    _size       = formatSize(_format, _width, _height, _depth);
 
     doInit(info);
 }
 
-void Texture::destroy() {
-    doDestroy();
+void Texture::initialize(const SwapchainTextureInfo &info, Texture *out) {
+    out->_type       = TextureType::TEX2D;
+    out->_format     = info.format;
+    out->_baseLayer  = 0;
+    out->_layerCount = 1;
+    out->_baseLevel  = 0;
+    out->_levelCount = 1;
+    out->_usage      = GFX_FORMAT_INFOS[toNumber(out->_format)].hasDepth ? TextureUsageBit::DEPTH_STENCIL_ATTACHMENT : TextureUsageBit::COLOR_ATTACHMENT;
+    out->_width      = info.width;
+    out->_height     = info.height;
+    out->_depth      = 1;
+    out->_samples    = info.samples;
+    out->_flags      = TextureFlagBit::NONE;
+    out->_size       = formatSize(out->_format, out->_width, out->_height, out->_depth);
 
-    _format = Format::UNKNOWN;
-    _width = _height = _depth = _size = 0;
+    out->doInit(info);
 }
 
 void Texture::resize(uint width, uint height) {
@@ -106,6 +115,13 @@ void Texture::resize(uint width, uint height) {
         _height = height;
         _size   = size;
     }
+}
+
+void Texture::destroy() {
+    doDestroy();
+
+    _format = Format::UNKNOWN;
+    _width = _height = _depth = _size = 0;
 }
 
 } // namespace gfx

@@ -28,6 +28,7 @@
 #include "DeviceValidator.h"
 #include "TextureValidator.h"
 #include "ValidationUtils.h"
+#include "gfx-validator/SwapchainValidator.h"
 
 namespace cc {
 namespace gfx {
@@ -46,7 +47,7 @@ TextureValidator::TextureValidator(Texture *actor)
 
 TextureValidator::~TextureValidator() {
     DeviceResourceTracker<Texture>::erase(this);
-    CC_SAFE_DELETE(_actor);
+    if (_ownTheActor) CC_SAFE_DELETE(_actor);
 }
 
 void TextureValidator::doInit(const TextureInfo &info) {
@@ -66,11 +67,16 @@ void TextureValidator::doInit(const TextureViewInfo &info) {
     _actor->initialize(actorInfo);
 }
 
+void TextureValidator::doInit(const SwapchainTextureInfo &info) {
+    // the actor is already initialized
+}
+
 void TextureValidator::doDestroy() {
     _actor->destroy();
 }
 
 void TextureValidator::doResize(uint width, uint height, uint /*size*/) {
+    CCASSERT(hasFlag(_flags, TextureFlagBit::RESIZABLE), "Cannot resize immutable textures");
     CCASSERT(!_isTextureView, "Cannot resize texture views");
 
     _actor->resize(width, height);

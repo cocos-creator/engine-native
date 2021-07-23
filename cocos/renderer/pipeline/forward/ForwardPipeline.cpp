@@ -52,7 +52,7 @@ namespace {
     (dst)[(offset) + 3] = (src).w;
 } // namespace
 
-gfx::RenderPass *ForwardPipeline::getOrCreateRenderPass(gfx::ClearFlags clearFlags) {
+gfx::RenderPass *ForwardPipeline::getOrCreateRenderPass(gfx::ClearFlags clearFlags, gfx::Swapchain *swapchain) {
     if (_renderPasses.count(clearFlags)) {
         return _renderPasses[clearFlags];
     }
@@ -60,8 +60,8 @@ gfx::RenderPass *ForwardPipeline::getOrCreateRenderPass(gfx::ClearFlags clearFla
     auto *                      device = gfx::Device::getInstance();
     gfx::ColorAttachment        colorAttachment;
     gfx::DepthStencilAttachment depthStencilAttachment;
-    colorAttachment.format                = device->getColorFormat();
-    depthStencilAttachment.format         = device->getDepthStencilFormat();
+    colorAttachment.format                = swapchain->getColorTexture()->getFormat();
+    depthStencilAttachment.format         = swapchain->getDepthStencilTexture()->getFormat();
     depthStencilAttachment.stencilStoreOp = gfx::StoreOp::STORE;
     depthStencilAttachment.depthStoreOp   = gfx::StoreOp::STORE;
 
@@ -107,8 +107,8 @@ bool ForwardPipeline::initialize(const RenderPipelineInfo &info) {
     return true;
 }
 
-bool ForwardPipeline::activate() {
-    if (!RenderPipeline::activate()) {
+bool ForwardPipeline::activate(gfx::Swapchain *swapchain) {
+    if (!RenderPipeline::activate(swapchain)) {
         CC_LOG_ERROR("RenderPipeline active failed.");
         return false;
     }
@@ -123,7 +123,7 @@ bool ForwardPipeline::activate() {
 
 void ForwardPipeline::render(const vector<scene::Camera *> &cameras) {
     _commandBuffers[0]->begin();
-    _pipelineUBO->updateGlobalUBO();
+    _pipelineUBO->updateGlobalUBO(cameras[0]->window->swapchain);
     _pipelineUBO->updateMultiCameraUBO(cameras);
     for (auto *camera : cameras) {
         sceneCulling(this, camera);

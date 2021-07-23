@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2019-2021 Xiamen Yaji Software Co., Ltd.
+ Copyright (c) 2020-2021 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos.com
 
@@ -23,22 +23,41 @@
  THE SOFTWARE.
 ****************************************************************************/
 
-#include "EmptyContext.h"
+#include "EmptySwapchain.h"
+#include "EmptyTexture.h"
+#include "base/CoreStd.h"
 
 namespace cc {
 namespace gfx {
 
-bool EmptyContext::doInit(const ContextInfo &info) {
-    _colorFmt        = Format::RGBA8;
-    _depthStencilFmt = Format::D24S8;
+void EmptySwapchain::doInit(const SwapchainInfo &info) {
+    _colorTexture        = CC_NEW(EmptyTexture);
+    _depthStencilTexture = CC_NEW(EmptyTexture);
 
-    return true;
+    SwapchainTextureInfo textureInfo;
+    textureInfo.swapchain = this;
+    textureInfo.format    = Format::RGBA8;
+    textureInfo.width     = info.width;
+    textureInfo.height    = info.height;
+    textureInfo.samples   = info.samples;
+    initTexture(textureInfo, _colorTexture);
+
+    textureInfo.format = Format::DEPTH_STENCIL;
+    initTexture(textureInfo, _depthStencilTexture);
 }
 
-void EmptyContext::doDestroy() {
+void EmptySwapchain::doDestroy() {
+    CC_SAFE_DESTROY(_depthStencilTexture);
+    CC_SAFE_DESTROY(_colorTexture);
 }
 
-void EmptyContext::present() {
+void EmptySwapchain::doResize(uint width, uint height) {
+}
+
+void EmptySwapchain::doDestroySurface() {
+}
+
+void EmptySwapchain::doCreateSurface(void *windowHandle) {
 }
 
 } // namespace gfx

@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2020-2021 Xiamen Yaji Software Co., Ltd.
+ Copyright (c) 2019-2021 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos.com
 
@@ -23,33 +23,42 @@
  THE SOFTWARE.
 ****************************************************************************/
 
-#pragma once
+#include "base/CoreStd.h"
 
-#include "base/Agent.h"
-#include "gfx-base/GFXTexture.h"
+#include "GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
 
-class CC_DLL TextureValidator final : public Agent<Texture> {
-public:
-    explicit TextureValidator(Texture *actor);
-    ~TextureValidator() override;
+Swapchain::Swapchain()
+: GFXObject(ObjectType::SWAPCHAIN) {
+}
 
-    void sanityCheck();
+Swapchain::~Swapchain() = default;
 
-    inline void renounceOwnership() { _ownTheActor = false; }
+void Swapchain::initialize(const SwapchainInfo &info) {
+    CCASSERT(info.windowHandle, "Invalid window handle");
 
-protected:
-    void doInit(const TextureInfo &info) override;
-    void doInit(const TextureViewInfo &info) override;
-    void doInit(const SwapchainTextureInfo &info) override;
-    void doDestroy() override;
-    void doResize(uint width, uint height, uint size) override;
+    _windowHandle = info.windowHandle;
+    _vsyncMode    = info.vsyncMode;
 
-    uint _lastUpdateFrame = 0U;
-    bool _ownTheActor     = true;
-};
+    doInit(info);
+}
+
+void Swapchain::destroy() {
+    doDestroy();
+
+    _windowHandle = nullptr;
+}
+
+void Swapchain::resize(uint32_t width, uint32_t height) {
+    if (width != _colorTexture->_width || height != _colorTexture->_height) {
+        doResize(width, height);
+
+        _colorTexture->_width = _depthStencilTexture->_width = width;
+        _colorTexture->_height = _depthStencilTexture->_height = height;
+    }
+}
 
 } // namespace gfx
 } // namespace cc

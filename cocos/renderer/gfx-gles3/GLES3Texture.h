@@ -44,6 +44,7 @@ protected:
     void doInit(const TextureViewInfo &info) override;
     void doDestroy() override;
     void doResize(uint width, uint height, uint size) override;
+    void doInit(const SwapchainTextureInfo &info) override;
 
     GLES3GPUTexture *_gpuTexture = nullptr;
 };

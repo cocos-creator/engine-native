@@ -25,18 +25,25 @@
 
 #pragma once
 
-#include "gfx-base/GFXContext.h"
+#include "GLES3Std.h"
+#include "gfx-base/GFXSwapchain.h"
+#include "GLES3Context.h"
 
 namespace cc {
 namespace gfx {
 
-class CC_DLL EmptyContext final : public Context {
+class GLES3Swapchain : public Swapchain {
 public:
-    void present() override;
-
+    GLES3Context *getContext() const { return _context; }
 protected:
-    bool doInit(const ContextInfo &info) override;
+    void doInit(const SwapchainInfo &info) override;
     void doDestroy() override;
+    void doResize(uint32_t width, uint32_t height) override;
+    void doDestroySurface() override;
+    void doCreateSurface(void *windowHandle) override;
+
+private:
+    GLES3Context *_context = nullptr;
 };
 
 } // namespace gfx

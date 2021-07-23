@@ -1,5 +1,5 @@
 /****************************************************************************
- Copyright (c) 2019-2021 Xiamen Yaji Software Co., Ltd.
+ Copyright (c) 2020-2021 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos.com
 
@@ -25,35 +25,37 @@
 
 #pragma once
 
-#include "GFXObject.h"
+#include "VKStd.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
 
-class CC_DLL Context : public Object {
+class CCVKDevice;
+class CCVKGPUDevice;
+class CCVKGPUSwapchain;
+class CCVKGPUSwapchain;
+class CCVKGPUSemaphorePool;
+
+class CC_VULKAN_API CCVKSwapchain final : public Swapchain {
 public:
-    Context();
-    ~Context() override;
+    CCVKSwapchain() = default;
+    ~CCVKSwapchain() override;
 
-    bool initialize(const ContextInfo &info);
-    void destroy();
+    inline CCVKGPUSwapchain *gpuSwapchain() { return _gpuSwapchain; }
 
-    virtual void present() = 0;
-
-    inline Context * getSharedContext() const { return _sharedContext; }
-    inline VsyncMode getVsyncMode() const { return _vsyncMode; }
-    inline Format    getColorFormat() const { return _colorFmt; }
-    inline Format    getDepthStencilFormat() const { return _depthStencilFmt; }
+    bool checkSwapchainStatus();
 
 protected:
-    virtual bool doInit(const ContextInfo &info) = 0;
-    virtual void doDestroy()                     = 0;
+    void doInit(const SwapchainInfo &info) override;
+    void doDestroy() override;
+    void doResize(uint32_t width, uint32_t height) override;
+    void doDestroySurface() override;
+    void doCreateSurface(void *windowHandle) override;
 
-    uintptr_t _windowHandle    = 0;
-    Context * _sharedContext   = nullptr;
-    VsyncMode _vsyncMode       = VsyncMode::OFF;
-    Format    _colorFmt        = Format::UNKNOWN;
-    Format    _depthStencilFmt = Format::UNKNOWN;
+    void destroySwapchain(const CCVKGPUDevice *gpuDevice);
+
+    CCVKGPUSwapchain *_gpuSwapchain = nullptr;
 };
 
 } // namespace gfx

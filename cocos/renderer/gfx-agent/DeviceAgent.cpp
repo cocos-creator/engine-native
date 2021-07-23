@@ -39,8 +39,11 @@
 #include "RenderPassAgent.h"
 #include "SamplerAgent.h"
 #include "ShaderAgent.h"
+#include "SwapchainAgent.h"
 #include "TextureAgent.h"
 #include "base/threading/ThreadSafeLinearAllocator.h"
+#include "gfx-base/GFXDef-common.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
@@ -65,19 +68,18 @@ bool DeviceAgent::doInit(const DeviceInfo &info) {
         return false;
     }
 
-    _context                                            = _actor->getContext();
-    _api                                                = _actor->getGfxAPI();
-    _deviceName                                         = _actor->getDeviceName();
-    _queue                                              = CC_NEW(QueueAgent(_actor->getQueue()));
-    _cmdBuff                                            = CC_NEW(CommandBufferAgent(_actor->getCommandBuffer()));
-    static_cast<CommandBufferAgent *>(_cmdBuff)->_queue = _queue;
-    _renderer                                           = _actor->getRenderer();
-    _vendor                                             = _actor->getVendor();
-    _caps                                               = _actor->_caps;
+    _api        = _actor->getGfxAPI();
+    _deviceName = _actor->getDeviceName();
+    _queue      = CC_NEW(QueueAgent(_actor->getQueue()));
+    _cmdBuff    = CC_NEW(CommandBufferAgent(_actor->getCommandBuffer()));
+    _renderer   = _actor->getRenderer();
+    _vendor     = _actor->getVendor();
+    _caps       = _actor->_caps;
     memcpy(_features.data(), _actor->_features.data(), static_cast<uint>(Feature::COUNT) * sizeof(bool));
 
     _mainMessageQueue = CC_NEW(MessageQueue);
 
+    static_cast<CommandBufferAgent *>(_cmdBuff)->_queue = _queue;
     static_cast<CommandBufferAgent *>(_cmdBuff)->initMessageQueue();
 
     setMultithreaded(true);
@@ -109,23 +111,19 @@ void DeviceAgent::doDestroy() {
     CC_SAFE_DELETE(_mainMessageQueue);
 }
 
-void DeviceAgent::resize(uint width, uint height) {
-    ENQUEUE_MESSAGE_3(
-        _mainMessageQueue, DeviceResize,
-        actor, _actor,
-        width, width,
-        height, height,
-        {
-            actor->resize(width, height);
-        });
-}
+void DeviceAgent::acquire(Swapchain *const *swapchains, uint32_t count) {
+    auto *actorSwapchains = _mainMessageQueue->allocate<Swapchain *>(count);
+    for (uint32_t i = 0; i < count; ++i) {
+        actorSwapchains[i] = static_cast<SwapchainAgent *>(swapchains[i])->getActor();
+    }
 
-void DeviceAgent::acquire() {
-    ENQUEUE_MESSAGE_1(
-        _mainMessageQueue, DeviceAcquire,
+    ENQUEUE_MESSAGE_3(
+        _mainMessageQueue, DevicePresent,
         actor, _actor,
+        swapchains, actorSwapchains,
+        count, count,
         {
-            actor->acquire();
+            actor->acquire(swapchains, count);
         });
 }
 
@@ -180,27 +178,6 @@ void DeviceAgent::setMultithreaded(bool multithreaded) {
     }
 }
 
-void DeviceAgent::releaseSurface(uintptr_t windowHandle) {
-    ENQUEUE_MESSAGE_2(
-        _mainMessageQueue, DeviceReleaseSurface,
-        actor, _actor,
-        windowHandle, windowHandle,
-        {
-            actor->releaseSurface(windowHandle);
-        });
-    _mainMessageQueue->kickAndWait();
-}
-
-void DeviceAgent::acquireSurface(uintptr_t windowHandle) {
-    ENQUEUE_MESSAGE_2(
-        _mainMessageQueue, DeviceAcquireSurface,
-        actor, _actor,
-        windowHandle, windowHandle,
-        {
-            actor->acquireSurface(windowHandle);
-        });
-}
-
 CommandBuffer *DeviceAgent::createCommandBuffer(const CommandBufferInfo &info, bool /*hasAgent*/) {
     CommandBuffer *actor = _actor->createCommandBuffer(info, true);
     return CC_NEW(CommandBufferAgent(actor));
@@ -209,6 +186,11 @@ CommandBuffer *DeviceAgent::createCommandBuffer(const CommandBufferInfo &info, b
 Queue *DeviceAgent::createQueue() {
     Queue *actor = _actor->createQueue();
     return CC_NEW(QueueAgent(actor));
+}
+
+Swapchain *DeviceAgent::createSwapchain() {
+    Swapchain *actor = _actor->createSwapchain();
+    return CC_NEW(SwapchainAgent(actor));
 }
 
 Buffer *DeviceAgent::createBuffer() {
@@ -280,7 +262,7 @@ void DeviceAgent::copyBuffersToTexture(const uint8_t *const *buffers, Texture *d
         bufferCount += regions[i].texSubres.layerCount;
     }
     uint totalSize = sizeof(BufferTextureCopy) * count + sizeof(uint8_t *) * bufferCount;
-    for (uint i = 0U, n = 0U; i < count; i++) {
+    for (uint i = 0U; i < count; i++) {
         const BufferTextureCopy &region = regions[i];
 
         uint size = formatSize(dst->getFormat(), region.texExtent.width, region.texExtent.height, 1);
@@ -330,6 +312,7 @@ void DeviceAgent::copyTextureToBuffers(Texture *srcTexture, uint8_t *const *buff
         {
             actor->copyTextureToBuffers(src, buffers, regions, count);
         });
+
     _mainMessageQueue->kickAndWait();
 }
 

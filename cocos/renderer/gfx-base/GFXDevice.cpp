@@ -25,7 +25,6 @@
 
 #include "base/CoreStd.h"
 
-#include "GFXContext.h"
 #include "GFXDevice.h"
 #include "GFXObject.h"
 
@@ -47,20 +46,7 @@ Device::~Device() {
     Device::instance = nullptr;
 }
 
-Format Device::getColorFormat() const {
-    return _context->getColorFormat();
-}
-
-Format Device::getDepthStencilFormat() const {
-    return _context->getDepthStencilFormat();
-}
-
 bool Device::initialize(const DeviceInfo &info) {
-    _width        = info.width;
-    _height       = info.height;
-    _pixelRatio   = info.pixelRatio;
-    _windowHandle = info.windowHandle;
-
     _bindingMappingInfo = info.bindingMappingInfo;
     if (_bindingMappingInfo.bufferOffsets.empty()) {
         _bindingMappingInfo.bufferOffsets.push_back(0);
@@ -77,8 +63,6 @@ void Device::destroy() {
 
     _bindingMappingInfo.bufferOffsets.clear();
     _bindingMappingInfo.samplerOffsets.clear();
-    _width = _height = _windowHandle = 0U;
-    _pixelRatio                      = 1.0F;
 }
 
 } // namespace gfx

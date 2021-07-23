@@ -28,6 +28,7 @@
 #include <functional>
 
 #include "base/Object.h"
+#include "base/TypeDef.h"
 #include "base/Value.h"
 #include "renderer/gfx-base/GFXDef.h"
 #include "scene/Light.h"
@@ -104,6 +105,7 @@ enum class RenderFlowType : uint8_t {
     POSTPROCESS,
     UI,
 };
+CC_ENUM_CONVERSION_OPERATOR(RenderFlowType)
 
 using RenderStageList = vector<RenderStage *>;
 using RenderFlowList  = vector<RenderFlow *>;
@@ -114,6 +116,7 @@ enum class CC_DLL RenderPassStage {
     DEFAULT = 100,
     UI      = 200,
 };
+CC_ENUM_CONVERSION_OPERATOR(RenderPassStage)
 
 struct CC_DLL InternalBindingDesc {
     gfx::DescriptorType        type;
@@ -139,11 +142,13 @@ enum class CC_DLL RenderPriority {
     MAX     = 0xff,
     DEFAULT = 0x80,
 };
+CC_ENUM_CONVERSION_OPERATOR(RenderPriority)
 
 enum class CC_DLL RenderQueueSortMode {
     FRONT_TO_BACK,
     BACK_TO_FRONT,
 };
+CC_ENUM_CONVERSION_OPERATOR(RenderQueueSortMode)
 
 struct CC_DLL RenderQueueDesc {
     bool                isTransparent = false;
@@ -219,6 +224,7 @@ enum class CC_DLL PipelineGlobalBindings {
 
     COUNT,
 };
+CC_ENUM_CONVERSION_OPERATOR(PipelineGlobalBindings)
 
 extern CC_DLL int globalUBOCount;
 extern CC_DLL int globalSamplerCount;
@@ -241,6 +247,7 @@ enum class CC_DLL ModelLocalBindings {
 
     COUNT,
 };
+CC_ENUM_CONVERSION_OPERATOR(ModelLocalBindings)
 
 extern CC_DLL int localUBOCount;
 extern CC_DLL int localSamplerCount;
@@ -346,18 +353,21 @@ enum class CC_DLL ForwardStagePriority {
     FORWARD = 10,
     UI      = 20
 };
+CC_ENUM_CONVERSION_OPERATOR(ForwardStagePriority)
 
 enum class CC_DLL ForwardFlowPriority {
     SHADOW  = 0,
     FORWARD = 1,
     UI      = 10,
 };
+CC_ENUM_CONVERSION_OPERATOR(ForwardFlowPriority)
 
 enum class CC_DLL RenderFlowTag {
     SCENE,
     POSTPROCESS,
     UI,
 };
+CC_ENUM_CONVERSION_OPERATOR(RenderFlowTag)
 
 enum class CC_DLL DeferredStagePriority {
     GBUFFER     = 10,
@@ -366,6 +376,7 @@ enum class CC_DLL DeferredStagePriority {
     POSTPROCESS = 19,
     UI          = 20
 };
+CC_ENUM_CONVERSION_OPERATOR(DeferredStagePriority)
 
 enum class CC_DLL DeferredFlowPriority {
     SHADOW   = 0,
@@ -373,6 +384,7 @@ enum class CC_DLL DeferredFlowPriority {
     LIGHTING = 5,
     UI       = 10
 };
+CC_ENUM_CONVERSION_OPERATOR(DeferredFlowPriority)
 
 struct CC_DLL UBOGlobal : public Object {
     static constexpr uint                        TIME_OFFSET        = 0;
@@ -462,6 +474,7 @@ enum class LayerList : uint {
     DEFAULT  = (1 << 30),
     ALL      = 0xffffffff,
 };
+CC_ENUM_CONVERSION_OPERATOR(LayerList)
 
 const uint CAMERA_DEFAULT_MASK = ~static_cast<uint>(LayerList::UI_2D) & ~static_cast<uint>(LayerList::PROFILER);
 //constexpr CAMERA_DEFAULT_MASK = Layers.makeMaskExclude([Layers.BitMask.UI_2D, Layers.BitMask.GIZMOS, Layers.BitMask.EDITOR,

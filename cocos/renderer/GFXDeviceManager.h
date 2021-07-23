@@ -25,15 +25,14 @@
 
 #pragma once
 
-#include "bindings/event/CustomEventTypes.h"
-#include "bindings/event/EventDispatcher.h"
 #include "gfx-agent/DeviceAgent.h"
 #include "gfx-empty/EmptyDevice.h"
 #include "gfx-validator/DeviceValidator.h"
 
 //#undef CC_USE_VULKAN
+#undef CC_USE_METAL
 //#undef CC_USE_GLES3
-//#undef CC_USE_GLES2
+#undef CC_USE_GLES2
 
 #ifdef CC_USE_VULKAN
     #include "gfx-vulkan/GFXVulkan.h"
@@ -107,14 +106,6 @@ private:
             CC_SAFE_DELETE(device);
             return false;
         }
-
-        EventDispatcher::addCustomEventListener(EVENT_DESTROY_WINDOW, [device](const CustomEvent &e) -> void {
-            device->releaseSurface(reinterpret_cast<uintptr_t>(e.args->ptrVal));
-        });
-
-        EventDispatcher::addCustomEventListener(EVENT_RECREATE_WINDOW, [device](const CustomEvent &e) -> void {
-            device->acquireSurface(reinterpret_cast<uintptr_t>(e.args->ptrVal));
-        });
 
         *pDevice = device;
 

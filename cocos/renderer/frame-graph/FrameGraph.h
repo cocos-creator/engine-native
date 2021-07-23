@@ -53,9 +53,9 @@ public:
     static StringHandle stringToHandle(const char *name);
     static const char * handleToString(const StringHandle &handle) noexcept;
 
-    void        present(const TextureHandle &input);
-    void        presentLastVersion(const VirtualResource *virtualResource);
-    void        presentFromBlackboard(const StringHandle &inputName);
+    void        present(const TextureHandle &input, gfx::Swapchain *swapchain);
+    void        presentLastVersion(const VirtualResource *virtualResource, gfx::Swapchain *swapchain);
+    void        presentFromBlackboard(const StringHandle &inputName, gfx::Swapchain *swapchain);
     void        compile();
     void        execute() noexcept;
     void        reset() noexcept;

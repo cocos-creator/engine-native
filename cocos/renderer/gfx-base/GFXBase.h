@@ -27,7 +27,6 @@
 
 #include "GFXBuffer.h"
 #include "GFXCommandBuffer.h"
-#include "GFXContext.h"
 #include "GFXDescriptorSet.h"
 #include "GFXDescriptorSetLayout.h"
 #include "GFXDevice.h"
@@ -40,5 +39,6 @@
 #include "GFXRenderPass.h"
 #include "GFXSampler.h"
 #include "GFXShader.h"
+#include "GFXSwapchain.h"
 #include "GFXTexture.h"
 #include "GFXTextureBarrier.h"

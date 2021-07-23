@@ -39,8 +39,8 @@ public:
 
     void initialize(const TextureInfo &info);
     void initialize(const TextureViewInfo &info);
-    void destroy();
     void resize(uint width, uint height);
+    void destroy();
 
     inline TextureType  getType() const { return _type; }
     inline TextureUsage getUsage() const { return _usage; }
@@ -56,10 +56,15 @@ public:
     inline bool         isTextureView() const { return _isTextureView; }
 
 protected:
+    friend class Swapchain;
+
     virtual void doInit(const TextureInfo &info)              = 0;
     virtual void doInit(const TextureViewInfo &info)          = 0;
     virtual void doDestroy()                                  = 0;
     virtual void doResize(uint width, uint height, uint size) = 0;
+
+    static void  initialize(const SwapchainTextureInfo &info, Texture *out);
+    virtual void doInit(const SwapchainTextureInfo &info) = 0;
 
     TextureType  _type          = TextureType::TEX2D;
     TextureUsage _usage         = TextureUsageBit::NONE;
@@ -72,7 +77,7 @@ protected:
     uint         _baseLayer     = 0U;
     uint         _layerCount    = 1U;
     uint         _size          = 0U;
-    SampleCount  _samples       = SampleCount::X1;
+    SampleCount  _samples       = SampleCount::ONE;
     TextureFlags _flags         = TextureFlagBit::NONE;
     bool         _isTextureView = false;
 };

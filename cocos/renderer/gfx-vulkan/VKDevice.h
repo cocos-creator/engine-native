@@ -26,6 +26,7 @@
 #pragma once
 
 #include "VKStd.h"
+#include "gfx-base/GFXDef-common.h"
 #include "gfx-base/GFXDevice.h"
 
 namespace cc {
@@ -35,7 +36,6 @@ class CCVKTexture;
 
 class CCVKGPUDevice;
 class CCVKGPUContext;
-class CCVKGPUSwapchain;
 
 class CCVKGPUBufferHub;
 class CCVKGPUTransportHub;
@@ -72,8 +72,7 @@ public:
     using Device::createTexture;
     using Device::createTextureBarrier;
 
-    void resize(uint width, uint height) override;
-    void acquire() override;
+    void acquire(Swapchain *const *swapchains, uint32_t count) override;
     void present() override;
 
     inline bool checkExtension(const String &extension) const {
@@ -82,9 +81,8 @@ public:
         });
     }
 
-    CCVKGPUContext *         gpuContext() const;
-    inline CCVKGPUDevice *   gpuDevice() const { return _gpuDevice; }
-    inline CCVKGPUSwapchain *gpuSwapchain() { return _gpuSwapchain; }
+    inline CCVKGPUDevice * gpuDevice() const { return _gpuDevice; }
+    inline CCVKGPUContext *gpuContext() { return _gpuContext; }
 
     inline CCVKGPUBufferHub *       gpuBufferHub() { return _gpuBufferHub; }
     inline CCVKGPUTransportHub *    gpuTransportHub() { return _gpuTransportHub; }
@@ -109,6 +107,7 @@ protected:
     void                 doDestroy() override;
     CommandBuffer *      createCommandBuffer(const CommandBufferInfo &info, bool hasAgent) override;
     Queue *              createQueue() override;
+    Swapchain *          createSwapchain() override;
     Buffer *             createBuffer() override;
     Texture *            createTexture() override;
     Sampler *            createSampler() override;
@@ -128,11 +127,8 @@ protected:
     void destroySwapchain();
     bool checkSwapchainStatus();
 
-    void releaseSurface(uintptr_t windowHandle) override;
-    void acquireSurface(uintptr_t windowHandle) override;
-
-    CCVKGPUDevice *       _gpuDevice    = nullptr;
-    CCVKGPUSwapchain *    _gpuSwapchain = nullptr;
+    CCVKGPUDevice *       _gpuDevice  = nullptr;
+    CCVKGPUContext *      _gpuContext = nullptr;
     vector<CCVKTexture *> _depthStencilTextures;
 
     vector<CCVKGPUFencePool *>         _gpuFencePools;
@@ -148,8 +144,6 @@ protected:
 
     vector<const char *> _layers;
     vector<const char *> _extensions;
-
-    bool _swapchainReady = false;
 };
 
 } // namespace gfx

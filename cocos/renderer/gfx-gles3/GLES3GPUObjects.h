@@ -74,7 +74,7 @@ public:
     uint         size           = 0;
     uint         arrayLayer     = 1;
     uint         mipLevel       = 1;
-    SampleCount  samples        = SampleCount::X1;
+    SampleCount  samples        = SampleCount::ONE;
     TextureFlags flags          = TextureFlagBit::NONE;
     bool         isPowerOf2     = false;
     bool         memoryless     = false;
@@ -429,6 +429,11 @@ public:
         GLuint glResource = isTexture ? gpuTexture->glTexture : gpuTexture->glRenderbuffer;
         auto & cacheMap   = isTexture ? _textureMap : _renderbufferMap;
         uint   mipLevel   = isTexture ? subres.mipLevel : 0;
+
+        if (gpuTexture->glTexture == 0 && gpuTexture->glRenderbuffer == 0) {
+            static const uint DEFAULT_FRAMEBUFFER = 0;
+            return DEFAULT_FRAMEBUFFER;
+        }
 
         if (cacheMap[glResource].empty()) cacheMap[glResource].resize(gpuTexture->mipLevel, 0U);
 

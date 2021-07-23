@@ -63,7 +63,7 @@ bool RenderPipeline::initialize(const RenderPipelineInfo &info) {
     return true;
 }
 
-bool RenderPipeline::activate() {
+bool RenderPipeline::activate(gfx::Swapchain */*swapchain*/) {
     _globalDSManager->activate(_device, this);
     _descriptorSet = _globalDSManager->getGlobalDescriptorSet();
     _pipelineUBO->activate(_device, this);

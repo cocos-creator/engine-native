@@ -25,30 +25,19 @@
 
 #pragma once
 
-#include "base/Agent.h"
-#include "gfx-base/GFXTexture.h"
+#include "gfx-base/GFXSwapchain.h"
 
 namespace cc {
 namespace gfx {
 
-class CC_DLL TextureValidator final : public Agent<Texture> {
+class CC_DLL EmptySwapchain final : public Swapchain {
 public:
-    explicit TextureValidator(Texture *actor);
-    ~TextureValidator() override;
-
-    void sanityCheck();
-
-    inline void renounceOwnership() { _ownTheActor = false; }
-
 protected:
-    void doInit(const TextureInfo &info) override;
-    void doInit(const TextureViewInfo &info) override;
-    void doInit(const SwapchainTextureInfo &info) override;
+    void doInit(const SwapchainInfo &info) override;
     void doDestroy() override;
-    void doResize(uint width, uint height, uint size) override;
-
-    uint _lastUpdateFrame = 0U;
-    bool _ownTheActor     = true;
+    void doResize(uint width, uint height) override;
+    void doDestroySurface() override;
+    void doCreateSurface(void *windowHandle) override;
 };
 
 } // namespace gfx
