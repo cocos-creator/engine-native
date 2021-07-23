@@ -259,5 +259,17 @@ void PhysXRigidBody::setMask(uint32_t m) {
     getSharedBody().setMask(m);
 }
 
+cc::Vec3 PhysXRigidBody::getPosition() {
+    cc::Vec3 pos;
+    pxSetVec3Ext(pos, getSharedBody().getImpl().rigidDynamic->getGlobalPose().p);
+    return pos;
+}
+
+cc::Vec4 PhysXRigidBody::getRotation() {
+    cc::Vec4 rot;
+    pxSetQuatExt(rot, getSharedBody().getImpl().rigidDynamic->getGlobalPose().q);
+    return rot;
+}
+
 } // namespace physics
 } // namespace cc

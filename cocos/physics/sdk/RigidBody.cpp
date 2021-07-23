@@ -186,5 +186,13 @@ void RigidBody::setMask(uint32_t m) {
     _impl->setMask(m);
 }
 
+cc::Vec3 RigidBody::getPosition() {
+    return _impl->getPosition();
+}
+
+cc::Vec4 RigidBody::getRotation() {
+    return _impl->getRotation();
+}
+
 } // namespace physics
 } // namespace cc

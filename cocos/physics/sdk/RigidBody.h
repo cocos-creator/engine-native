@@ -73,6 +73,8 @@ public:
     void             setGroup(uint32_t g) override;
     uint32_t         getMask() override;
     void             setMask(uint32_t m) override;
+    cc::Vec3         getPosition() override;
+    cc::Vec4         getRotation() override;
 
 private:
     std::unique_ptr<IRigidBody> _impl;

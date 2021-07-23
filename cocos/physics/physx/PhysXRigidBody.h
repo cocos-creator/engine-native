@@ -79,6 +79,8 @@ public:
     void                          setGroup(uint32_t g) override;
     void                          setMask(uint32_t m) override;
     inline uint32_t               getInitialGroup() const { return _mGroup; }
+    cc::Vec3                      getPosition() override;
+    cc::Vec4                      getRotation() override;
 
 protected:
     // physx::PhysXWorld* mWrappedWorld;
