@@ -372,8 +372,8 @@ void cmdFuncCCVKCreateRenderPass(CCVKDevice *device, CCVKGPURenderPass *gpuRende
                                             : VK_IMAGE_ASPECT_DEPTH_BIT;
             VkImageLayout      layout = isGeneralLayout ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             attachmentReferences.push_back({VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2, nullptr, subpassInfo.depthStencil, layout, aspect});
-            gpuRenderPass->sampleCounts.push_back(sampleCount);
         }
+        gpuRenderPass->sampleCounts.push_back(sampleCount);
 
         if (subpassInfo.depthStencilResolve != INVALID_BINDING) {
             const ColorAttachment &desc = gpuRenderPass->colorAttachments[subpassInfo.depthStencilResolve];
@@ -1161,6 +1161,54 @@ void cmdFuncCCVKCopyBuffersToTexture(CCVKDevice *device, const uint8_t *const *b
     curTypes.assign({THSVS_ACCESS_TRANSFER_WRITE});
     gpuTexture->transferAccess = THSVS_ACCESS_TRANSFER_WRITE;
     device->gpuBarrierManager()->checkIn(gpuTexture);
+}
+
+CC_VULKAN_API void cmdFuncCCVKCopyTextureToBuffers(CCVKDevice *device, CCVKGPUTexture *srcTexture, CCVKGPUBuffer *destBuffer, const BufferTextureCopy *regions, uint count, const CCVKGPUCommandBuffer *gpuCommandBuffer) {
+    (void)device; // fix clang-tidy error
+    
+    ThsvsImageBarrier barrier{};
+    barrier.image                       = srcTexture->vkImage;
+    barrier.discardContents             = false;
+    barrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+    barrier.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+    barrier.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+    barrier.subresourceRange.aspectMask = srcTexture->aspectMask;
+    barrier.prevAccessCount             = utils::toUint(srcTexture->currentAccessTypes.size());
+    barrier.pPrevAccesses               = srcTexture->currentAccessTypes.data();
+    barrier.nextAccessCount             = 1;
+    barrier.pNextAccesses               = &THSVS_ACCESS_TYPES[static_cast<uint>(AccessType::TRANSFER_READ)];
+
+    if (srcTexture->transferAccess != THSVS_ACCESS_TRANSFER_READ) {
+        cmdFuncCCVKImageMemoryBarrier(gpuCommandBuffer, barrier);
+    }
+
+    vector<VkBufferImageCopy> stagingRegions(count);
+    VkDeviceSize              offset = 0;
+    for (size_t i = 0U; i < count; ++i) {
+        const BufferTextureCopy &region        = regions[i];
+        VkBufferImageCopy &      stagingRegion = stagingRegions[i];
+        stagingRegion.bufferOffset             = destBuffer->startOffset + offset;
+        stagingRegion.bufferRowLength          = region.buffStride;
+        stagingRegion.bufferImageHeight        = region.buffTexHeight;
+        stagingRegion.imageSubresource         = {srcTexture->aspectMask, region.texSubres.mipLevel, region.texSubres.baseArrayLayer, region.texSubres.layerCount};
+        stagingRegion.imageOffset              = {region.texOffset.x, region.texOffset.y, region.texOffset.z};
+        stagingRegion.imageExtent              = {region.texExtent.width, region.texExtent.height, region.texExtent.depth};
+
+        uint w          = region.buffStride > 0 ? region.buffStride : region.texExtent.width;
+        uint h          = region.buffTexHeight > 0 ? region.buffTexHeight : region.texExtent.height;
+        uint regionSize = formatSize(srcTexture->format, w, h, region.texExtent.depth);
+
+        offset += regionSize;
+    }
+    vkCmdCopyImageToBuffer(gpuCommandBuffer->vkCommandBuffer, srcTexture->vkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                           destBuffer->vkBuffer, utils::toUint(stagingRegions.size()), stagingRegions.data());
+
+    if (srcTexture->transferAccess != THSVS_ACCESS_TRANSFER_READ) {
+        std::swap(barrier.prevAccessCount, barrier.nextAccessCount);
+        std::swap(barrier.pPrevAccesses, barrier.pNextAccesses);
+        cmdFuncCCVKImageMemoryBarrier(gpuCommandBuffer, barrier);
+    }
 }
 
 void cmdFuncCCVKDestroyRenderPass(CCVKGPUDevice *gpuDevice, CCVKGPURenderPass *gpuRenderPass) {

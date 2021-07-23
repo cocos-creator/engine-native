@@ -39,7 +39,7 @@ public:
     static CCMTLDevice *getInstance();
 
     CCMTLDevice();
-    ~CCMTLDevice() override;
+    ~CCMTLDevice();
 
     CCMTLDevice(const CCMTLDevice &) = delete;
     CCMTLDevice(CCMTLDevice &&) = delete;
@@ -83,7 +83,7 @@ public:
     inline CCMTLGPUStagingBufferPool *gpuStagingBufferPool() const { return _gpuStagingBufferPools[_currentFrameIndex]; }
     inline bool isSamplerDescriptorCompareFunctionSupported() const { return _isSamplerDescriptorCompareFunctionSupported; }
     inline uint currentFrameIndex() const { return _currentFrameIndex; }
-    inline void *getDSSTexture() const { return _dssTex; }
+    inline void *getDSTexture() const { return _dsTex; }
 
 protected:
     static CCMTLDevice * _instance;
@@ -108,6 +108,7 @@ protected:
     GlobalBarrier *createGlobalBarrier() override;
     TextureBarrier *createTextureBarrier() override;
     void copyBuffersToTexture(const uint8_t *const *buffers, Texture *dst, const BufferTextureCopy *regions, uint count) override;
+    void copyTextureToBuffers(Texture *src, uint8_t *const *buffers, const BufferTextureCopy *region, uint count) override;
 
     void onMemoryWarning();
 
@@ -115,7 +116,7 @@ protected:
     void *_mtlCommandQueue = nullptr;
     void *_mtlDevice = nullptr;
     void *_mtlLayer = nullptr;
-    void *_dssTex = nullptr;
+    void *_dsTex = nullptr;
     void *_activeDrawable = nullptr;
     unsigned long _mtlFeatureSet = 0;
     uint _maxSamplerUnits = 0;

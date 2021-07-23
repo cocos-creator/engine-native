@@ -219,11 +219,18 @@ bool DeferredPipeline::createQuadInputAssembler(gfx::Buffer **quadIB, gfx::Buffe
     return (*quadIA) != nullptr;
 }
 
-gfx::Rect DeferredPipeline::getRenderArea(scene::Camera *camera) {
+gfx::Rect DeferredPipeline::getRenderArea(scene::Camera *camera, bool onScreen) {
     gfx::Rect renderArea;
-    
-    uint w = camera->window->hasOnScreenAttachments && static_cast<uint>(_device->getSurfaceTransform()) % 2 ? camera->height : camera->width;
-    uint h = camera->window->hasOnScreenAttachments && static_cast<uint>(_device->getSurfaceTransform()) % 2 ? camera->width : camera->height;
+
+    uint w;
+    uint h;
+    if (onScreen) {
+        w = camera->window->hasOnScreenAttachments && static_cast<uint>(_device->getSurfaceTransform()) % 2 ? camera->height : camera->width;
+        h = camera->window->hasOnScreenAttachments && static_cast<uint>(_device->getSurfaceTransform()) % 2 ? camera->width : camera->height;
+    } else {
+        w = camera->width;
+        h = camera->height;
+    }
 
     const auto &viewport = camera->viewPort;
     renderArea.x         = static_cast<int>(viewport.x * w);
@@ -234,20 +241,9 @@ gfx::Rect DeferredPipeline::getRenderArea(scene::Camera *camera) {
 }
 
 void DeferredPipeline::destroyQuadInputAssembler() {
-    if (_quadIB) {
-        _quadIB->destroy();
-        _quadIB = nullptr;
-    }
-
-    if (_quadVBOffscreen) {
-        _quadVBOffscreen->destroy();
-        _quadVBOffscreen = nullptr;
-    }
-
-    if (_quadIAOffscreen) {
-        _quadIAOffscreen->destroy();
-        _quadIAOffscreen = nullptr;
-    }
+    CC_SAFE_DESTROY(_quadIB);
+    CC_SAFE_DESTROY(_quadVBOffscreen);
+    CC_SAFE_DESTROY(_quadIAOffscreen);
 }
 
 bool DeferredPipeline::activeRenderer() {
@@ -266,7 +262,7 @@ bool DeferredPipeline::activeRenderer() {
         {},
         {},
     };
-    const uint  samplerHash = SamplerLib::genSamplerHash(info);
+    const uint          samplerHash = SamplerLib::genSamplerHash(info);
     gfx::Sampler *const sampler     = SamplerLib::getSampler(samplerHash);
 
     // Main light sampler binding
@@ -315,7 +311,7 @@ bool DeferredPipeline::activeRenderer() {
     _gbufferRenderPass                 = _device->createRenderPass(gbufferPass);
 
     gfx::ColorAttachment cAttch = {
-        gfx::Format::RGBA8,
+        gfx::Format::RGBA16F,
         gfx::SampleCount::X1,
         gfx::LoadOp::CLEAR,
         gfx::StoreOp::STORE,
@@ -373,7 +369,7 @@ void DeferredPipeline::generateDeferredRenderData() {
     gfx::TextureInfo info = {
         gfx::TextureType::TEX2D,
         gfx::TextureUsageBit::COLOR_ATTACHMENT | gfx::TextureUsageBit::SAMPLED,
-        gfx::Format::RGBA8,
+        gfx::Format::RGBA16F,
         _width,
         _height,
     };
@@ -425,6 +421,7 @@ void DeferredPipeline::generateDeferredRenderData() {
 
 void DeferredPipeline::destroy() {
     destroyQuadInputAssembler();
+    destroyDeferredData();
 
     if (_descriptorSet) {
         _descriptorSet->getBuffer(UBOGlobal::BINDING)->destroy();
@@ -437,14 +434,14 @@ void DeferredPipeline::destroy() {
     }
 
     for (auto &it : _renderPasses) {
-        it.second->destroy();
+        CC_DESTROY(it.second);
     }
     _renderPasses.clear();
 
     _commandBuffers.clear();
 
-    _gbufferRenderPass  = nullptr;
-    _lightingRenderPass = nullptr;
+    CC_SAFE_DESTROY(_gbufferRenderPass);
+    CC_SAFE_DESTROY(_lightingRenderPass);
 
     RenderPipeline::destroy();
 }

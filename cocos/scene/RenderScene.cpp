@@ -28,10 +28,14 @@
 #include <utility>
 #include "base/Log.h"
 
+extern void jsbFlushFastMQ();
+
 namespace cc {
 namespace scene {
 
 void RenderScene::update(uint32_t stamp) {
+    jsbFlushFastMQ();
+
     if (_directionalLight) {
         _directionalLight->update();
     }
@@ -96,7 +100,7 @@ void RenderScene::addSkinningModel(SkinningModel *skinModel) {
 }
 
 void RenderScene::removeModel(uint32_t idx) {
-    if (idx >= _models.size()) {
+    if (idx >= static_cast<uint32_t>(_models.size())) {
         CC_LOG_WARNING("Try to remove invalid model.");
         return;
     }

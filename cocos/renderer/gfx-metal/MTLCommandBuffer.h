@@ -45,7 +45,7 @@ class CCMTLFence;
 class CCMTLCommandBuffer final : public CommandBuffer {
 public:
     explicit CCMTLCommandBuffer();
-    ~CCMTLCommandBuffer() override = default;
+    ~CCMTLCommandBuffer();
     CCMTLCommandBuffer(const CCMTLCommandBuffer &) = delete;
     CCMTLCommandBuffer(CCMTLCommandBuffer &&) = delete;
     CCMTLCommandBuffer &operator=(const CCMTLCommandBuffer &) = delete;
@@ -74,7 +74,7 @@ public:
     void execute(CommandBuffer *const *cmdBuffs, uint32_t count) override;
     void dispatch(const DispatchInfo &info) override;
     void pipelineBarrier(const GlobalBarrier *barrier, const TextureBarrier *const *textureBarriers, const Texture *const *textures, uint textureBarrierCount) override;
-
+    void copyTextureToBuffers(Texture *src, uint8_t *const *buffers, const BufferTextureCopy *regions, uint count);
     inline bool isCommandBufferBegan() const { return _commandBufferBegan; }
     inline id<MTLCommandBuffer> getMTLCommandBuffer() const { return _mtlCommandBuffer; }
 
@@ -85,6 +85,7 @@ protected:
     void doDestroy() override;
 
     void bindDescriptorSets();
+    void updateDepthStencilState(uint32_t subPassIndex, MTLRenderPassDescriptor* descriptor);
     static bool isRenderingEntireDrawable(const Rect &rect, const CCMTLRenderPass *renderPass);
 
     CCMTLGPUPipelineState *_gpuPipelineState = nullptr;
@@ -104,6 +105,11 @@ protected:
     id<MTLParallelRenderCommandEncoder> _parallelEncoder = nil;
     CCMTLInputAssembler *_inputAssembler = nullptr;
     MTLPrimitiveType _mtlPrimitiveType = MTLPrimitiveType::MTLPrimitiveTypeTriangle;
+    
+    //state cache
+    RenderPass *_curRenderPass = nullptr;
+    Framebuffer *_curFBO = nullptr;
+    
 };
 
 } // namespace gfx

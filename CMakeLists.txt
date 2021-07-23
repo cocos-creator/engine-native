@@ -376,12 +376,12 @@ if(USE_AUDIO)
     elseif(APPLE)
         cocos_source_files(
                          cocos/audio/apple/AudioDecoder.h
-            NO_WERROR    cocos/audio/apple/AudioPlayer.mm
-            NO_WERROR    cocos/audio/apple/AudioDecoder.mm
+                         cocos/audio/apple/AudioPlayer.mm
+                         cocos/audio/apple/AudioDecoder.mm
                          cocos/audio/apple/AudioPlayer.h
             NO_WERROR    cocos/audio/apple/AudioEngine-inl.mm
                          cocos/audio/apple/AudioMacros.h
-            NO_WERROR    cocos/audio/apple/AudioCache.mm
+                         cocos/audio/apple/AudioCache.mm
                          cocos/audio/apple/AudioCache.h
                          cocos/audio/apple/AudioEngine-inl.h
         )
@@ -578,14 +578,14 @@ endif()
 if(APPLE)
     cocos_source_files(
                      cocos/network/DownloaderImpl-apple.h
-        NO_WERROR    cocos/network/DownloaderImpl-apple.mm
+                     cocos/network/DownloaderImpl-apple.mm
                      cocos/network/HttpAsynConnection-apple.h
         NO_WERROR    cocos/network/HttpAsynConnection-apple.m
-        NO_WERROR    cocos/network/HttpClient-apple.mm
+                     cocos/network/HttpClient-apple.mm
     )
     if(USE_SOCKET)
         cocos_source_files(
-            NO_WERROR    cocos/network/WebSocket-apple.mm
+                        cocos/network/WebSocket-apple.mm
         )
         set_source_files_properties(${CWD}/cocos/network/WebSocket-apple.mm PROPERTIES
             COMPILE_FLAGS -fobjc-arc
@@ -1646,6 +1646,7 @@ cocos_source_files(
                  cocos/bindings/manual/jsb_module_register.h
                  cocos/bindings/manual/jsb_platform.h
     NO_WERROR    cocos/bindings/manual/jsb_scene_manual.cpp
+    NO_WERROR    cocos/bindings/manual/jsb_scene_manual_ext.cpp
                  cocos/bindings/manual/jsb_scene_manual.h
     NO_WERROR    cocos/bindings/manual/jsb_network_manual.cpp
                  cocos/bindings/manual/jsb_network_manual.h
@@ -1685,9 +1686,9 @@ elseif(OHOS)
     )
 elseif(APPLE)
     cocos_source_files(
-        NO_WERROR    cocos/bindings/manual/jsb_platfrom_apple.mm
+                    cocos/bindings/manual/jsb_platfrom_apple.mm
                      cocos/bindings/manual/JavaScriptObjCBridge.h
-        NO_WERROR    cocos/bindings/manual/JavaScriptObjCBridge.mm
+                     cocos/bindings/manual/JavaScriptObjCBridge.mm
     )
 elseif(WIN32)
     cocos_source_files(
@@ -1705,7 +1706,7 @@ if(USE_SE_V8)
                      cocos/bindings/jswrapper/v8/Object.h
                      cocos/bindings/jswrapper/v8/ObjectWrap.cpp
                      cocos/bindings/jswrapper/v8/ObjectWrap.h
-                     cocos/bindings/jswrapper/v8/ScriptEngine.cpp
+        NO_WERROR    cocos/bindings/jswrapper/v8/ScriptEngine.cpp
                      cocos/bindings/jswrapper/v8/ScriptEngine.h
                      cocos/bindings/jswrapper/v8/SeApi.h
                      cocos/bindings/jswrapper/v8/Utils.cpp
@@ -2065,6 +2066,7 @@ if(APPLE)
         "-framework Metal"
         "-framework MetalKit"
         "-framework QuartzCore"
+        "-framework MetalPerformanceShaders"
         "-lsqlite3"
         "-framework Security"
         "-framework SystemConfiguration"
@@ -2086,6 +2088,7 @@ if(APPLE)
     elseif(IOS)
         target_link_libraries(cocos2d PUBLIC
             "-framework QuartzCore"
+            "-framework MetalPerformanceShaders"
             "-framework UIKit"
             "-framework AVKit"
             "-framework WebKit"

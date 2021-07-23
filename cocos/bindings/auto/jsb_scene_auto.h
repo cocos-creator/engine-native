@@ -26,6 +26,7 @@ bool js_register_cc_scene_Node(se::Object* obj);
 bool register_all_scene(se::Object* obj);
 
 JSB_REGISTER_OBJECT_TYPE(cc::scene::Node);
+SE_DECLARE_FUNC(js_scene_Node_initWithData);
 SE_DECLARE_FUNC(js_scene_Node_setParent);
 SE_DECLARE_FUNC(js_scene_Node_Node);
 
@@ -125,7 +126,6 @@ bool js_register_cc_scene_Model(se::Object* obj);
 bool register_all_scene(se::Object* obj);
 
 JSB_REGISTER_OBJECT_TYPE(cc::scene::Model);
-SE_DECLARE_FUNC(js_scene_Model_addSubModel);
 SE_DECLARE_FUNC(js_scene_Model_getCastShadow);
 SE_DECLARE_FUNC(js_scene_Model_getEnabled);
 SE_DECLARE_FUNC(js_scene_Model_getInstMatWorldIdx);
@@ -149,6 +149,7 @@ SE_DECLARE_FUNC(js_scene_Model_setInstMatWorldIdx);
 SE_DECLARE_FUNC(js_scene_Model_setLocalBuffer);
 SE_DECLARE_FUNC(js_scene_Model_setNode);
 SE_DECLARE_FUNC(js_scene_Model_setReceiveShadow);
+SE_DECLARE_FUNC(js_scene_Model_setSubModel);
 SE_DECLARE_FUNC(js_scene_Model_setTransform);
 SE_DECLARE_FUNC(js_scene_Model_updateTransform);
 SE_DECLARE_FUNC(js_scene_Model_updateUBOs);
@@ -256,6 +257,7 @@ SE_DECLARE_FUNC(js_scene_Pass_getPrimitive);
 SE_DECLARE_FUNC(js_scene_Pass_getPriority);
 SE_DECLARE_FUNC(js_scene_Pass_getRasterizerState);
 SE_DECLARE_FUNC(js_scene_Pass_getStage);
+SE_DECLARE_FUNC(js_scene_Pass_initWithData);
 SE_DECLARE_FUNC(js_scene_Pass_setBatchingScheme);
 SE_DECLARE_FUNC(js_scene_Pass_setBlendState);
 SE_DECLARE_FUNC(js_scene_Pass_setDepthStencilState);

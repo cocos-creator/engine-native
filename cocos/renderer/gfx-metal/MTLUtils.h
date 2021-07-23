@@ -42,9 +42,12 @@ namespace mu {
 MTLResourceOptions toMTLResourceOption(MemoryUsage usage);
 MTLLoadAction toMTLLoadAction(LoadOp op);
 MTLStoreAction toMTLStoreAction(StoreOp op);
+MTLStoreAction toMTLMSAAStoreAction(StoreOp op);
 MTLClearColor toMTLClearColor(const Color &clearColor);
 MTLVertexFormat toMTLVertexFormat(Format, bool);
 MTLPixelFormat toMTLPixelFormat(Format);
+MTLMultisampleDepthResolveFilter toMTLDepthResolveMode(ResolveMode mode);
+MTLMultisampleStencilResolveFilter toMTLStencilResolveMode(ResolveMode mode);
 // Because some pixel format is not supported on metal, so need to convert to supported pixel format.
 Format convertGFXPixelFormat(Format);
 MTLColorWriteMask toMTLColorWriteMask(ColorMask);
@@ -91,6 +94,8 @@ bool isIndirectCommandBufferSupported(MTLFeatureSet featureSet);
 bool isDepthStencilFormatSupported(id<MTLDevice> device, Format format, uint family);
 MTLPixelFormat getSupportedDepthStencilFormat(id<MTLDevice> device, uint family, uint &depthBits);
 bool isIndirectDrawSupported(uint family);
+bool isImageBlockSupported();
+bool isFramebufferFetchSupported();
 String featureSetToString(MTLFeatureSet featureSet);
 const uint8_t *const convertData(const uint8_t *source, uint length, Format type);
 uint getBlockSize(Format format);

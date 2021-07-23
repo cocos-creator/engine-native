@@ -41,6 +41,10 @@ CCMTLBuffer::CCMTLBuffer() : Buffer() {
     _typedID = generateObjectID<decltype(this)>();
 }
 
+CCMTLBuffer::~CCMTLBuffer() {
+    destroy();
+}
+
 void CCMTLBuffer::doInit(const BufferInfo &info) {
     _isIndirectDrawSupported = CCMTLDevice::getInstance()->isIndirectDrawSupported();
     if (hasFlag(_usage, BufferUsage::INDEX)) {
@@ -83,6 +87,7 @@ bool CCMTLBuffer::createMTLBuffer(uint size, MemoryUsage usage) {
 
         std::function<void(void)> destroyFunc = [=]() {
             if (mtlBuffer) {
+                [mtlBuffer setPurgeableState:MTLPurgeableStateEmpty];
                 [mtlBuffer release];
             }
         };
@@ -122,6 +127,7 @@ void CCMTLBuffer::doDestroy() {
 
     std::function<void(void)> destroyFunc = [=]() {
         if (mtlBuffer) {
+            [mtlBuffer setPurgeableState:MTLPurgeableStateEmpty];
             [mtlBuffer release];
         }
     };

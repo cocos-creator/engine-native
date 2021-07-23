@@ -37,6 +37,10 @@ CCMTLTexture::CCMTLTexture() : Texture() {
     _typedID = generateObjectID<decltype(this)>();
 }
 
+CCMTLTexture::~CCMTLTexture() {
+    destroy();
+}
+
 void CCMTLTexture::doInit(const TextureInfo &info) {
     _isArray = _type == TextureType::TEX1D_ARRAY || _type == TextureType::TEX2D_ARRAY;
     if (_format == Format::PVRTC_RGB2 ||
@@ -109,15 +113,20 @@ bool CCMTLTexture::createMTLTexture() {
         return false;
 
     descriptor.usage = mu::toMTLTextureUsage(_usage);
-    descriptor.textureType = mu::toMTLTextureType(_type);
-    // ongoing: MSAA for metal
-    descriptor.sampleCount = mu::toMTLSampleCount(SampleCount::X1);
+    descriptor.sampleCount = mu::toMTLSampleCount(_samples);
+    descriptor.textureType = descriptor.sampleCount > 1 ? MTLTextureType2DMultisample : mu::toMTLTextureType(_type);
     descriptor.mipmapLevelCount = _levelCount;
     descriptor.arrayLength = _type == TextureType::CUBE ? 1 : _layerCount;
-    if (hasFlag(_usage, TextureUsage::COLOR_ATTACHMENT) ||
-        hasFlag(_usage, TextureUsage::DEPTH_STENCIL_ATTACHMENT) ||
-        hasFlag(_usage, TextureUsage::INPUT_ATTACHMENT)) {
-        descriptor.resourceOptions = MTLResourceStorageModePrivate;
+    
+    if(hasAllFlags(TextureUsage::COLOR_ATTACHMENT | TextureUsage::DEPTH_STENCIL_ATTACHMENT | TextureUsage::INPUT_ATTACHMENT, _usage) && mu::isImageBlockSupported()) {
+        //xcode OS version warning
+        if (@available(macOS 11.0, *)) {
+            descriptor.storageMode = MTLStorageModeMemoryless;
+        } else {
+            descriptor.storageMode = MTLStorageModePrivate;
+        }
+    } else if (hasFlag(_usage, TextureUsage::COLOR_ATTACHMENT) || hasFlag(_usage, TextureUsage::DEPTH_STENCIL_ATTACHMENT) || hasFlag(_usage, TextureUsage::INPUT_ATTACHMENT)) {
+        descriptor.storageMode = MTLStorageModePrivate;
     }
 
     id<MTLDevice> mtlDevice = id<MTLDevice>(CCMTLDevice::getInstance()->getMTLDevice());

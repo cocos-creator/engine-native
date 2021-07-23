@@ -66,7 +66,7 @@ void Model::updateUBOs(uint32_t stamp) {
     Mat4                                         mat4;
     std::array<float, pipeline::UBOLocal::COUNT> bufferView;
     if (idx >= 0) {
-        const std::vector<uint8_t *> &attrs = _instanceAttributeBlock.views;
+        const std::vector<uint8_t *> &attrs = getInstancedAttributeBlock()->views;
         uploadMat4AsVec4x3(worldMatrix,
                            reinterpret_cast<float *>(attrs[idx]),
                            reinterpret_cast<float *>(attrs[idx + 1]),
@@ -79,8 +79,12 @@ void Model::updateUBOs(uint32_t stamp) {
     }
 }
 
-void Model::addSubModel(SubModel *subModel) {
-    _subModels.push_back(subModel);
+void Model::setSubModel(uint32_t idx, SubModel *subModel) {
+    if (idx >= static_cast<uint32_t>(_subModels.size())) {
+        _subModels.emplace_back(subModel);
+        return;
+    }
+    _subModels[idx] = subModel;
 }
 
 } // namespace scene
