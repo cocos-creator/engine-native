@@ -140,9 +140,9 @@ namespace cocos2d { namespace network {
     return self;
 }
 
--(const cocos2d::network::DownloadTask *)get
+-(cocos2d::network::DownloadTask *)get
 {
-    return _task.get();
+    return const_cast<cocos2d::network::DownloadTask *>(_task.get());
 }
 
 -(void) addData:(NSData*) data
@@ -310,33 +310,8 @@ namespace cocos2d { namespace network {
         }
         else {
             [(NSURLSessionDownloadTask *)taskKey cancelByProducingResumeData:^(NSData *resumeData) {
-                if (resumeData)
-                {
-                    NSString *tempFilePath = [NSString stringWithFormat:@"%s%s", storagePath.c_str(), _hints.tempFileNameSuffix.c_str()];
-                    NSString *tempFileDir = [tempFilePath stringByDeletingLastPathComponent];
-                    NSFileManager *fileManager = [NSFileManager defaultManager];
-                    BOOL isDir = false;
-                    if ([fileManager fileExistsAtPath:tempFileDir isDirectory:&isDir])
-                    {
-                        if (NO == isDir)
-                        {
-                            // REFINE: the directory is a file, not a directory, how to echo to developer?
-                            DLLOG("DownloaderAppleImpl temp dir is a file!");
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        NSURL *tempFileURL = [NSURL fileURLWithPath:tempFileDir];
-                        if (NO == [fileManager createDirectoryAtURL:tempFileURL withIntermediateDirectories:YES attributes:nil error:nil])
-                        {
-                            // create directory failed
-                            DLLOG("DownloaderAppleImpl create temp dir failed");
-                            return;
-                        }
-                    }
-                    [resumeData writeToFile:tempFilePath atomically:YES];
-                }
+                NSString *tempFilePath = [NSString stringWithFormat:@"%s%s", storagePath.c_str(), _hints.tempFileNameSuffix.c_str()];
+                [self saveResumeData: resumeData templFile:tempFilePath];
             }];
         }
         break;
@@ -358,34 +333,8 @@ namespace cocos2d { namespace network {
         }
         else {
             [task cancelByProducingResumeData:^(NSData *resumeData) {
-                if (resumeData)
-                {
-                    NSString *tempFilePath = [NSString stringWithFormat:@"%s%s", storagePath.c_str(), _hints.tempFileNameSuffix.c_str()];
-                    NSString *tempFileDir = [tempFilePath stringByDeletingLastPathComponent];
-                    NSFileManager *fileManager = [NSFileManager defaultManager];
-                    BOOL isDir = false;
-                    if ([fileManager fileExistsAtPath:tempFileDir isDirectory:&isDir])
-                    {
-                        if (NO == isDir)
-                        {
-                            // REFINE: the directory is a file, not a directory, how to echo to developer?
-                            DLLOG("DownloaderAppleImpl temp dir is a file!");
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        NSURL *tempFileURL = [NSURL fileURLWithPath:tempFileDir];
-                        if (NO == [fileManager createDirectoryAtURL:tempFileURL withIntermediateDirectories:YES attributes:nil error:nil])
-                        {
-                            // create directory failed
-                            DLLOG("DownloaderAppleImpl create temp dir failed");
-                            return;
-                        }
-                    }
-
-                    [resumeData writeToFile:tempFilePath atomically:YES];
-                }
+                NSString *tempFilePath = [NSString stringWithFormat:@"%s%s", storagePath.c_str(), _hints.tempFileNameSuffix.c_str()];
+                [self saveResumeData: resumeData templFile:tempFilePath];
             }];
         }
     }
@@ -405,6 +354,46 @@ namespace cocos2d { namespace network {
     self.taskDict = nil;
     [super dealloc];
 }
+
+-(void)saveResumeData:(NSData*)resumeData
+            templFile:(NSString *)templFile
+{
+    if (!resumeData)
+    {
+        return;
+    }
+    
+    NSString *tempFileDir = [templFile stringByDeletingLastPathComponent];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    BOOL isDir = false;
+    if ([fileManager fileExistsAtPath:tempFileDir
+                          isDirectory:&isDir])
+    {
+        if (NO == isDir)
+        {
+            // REFINE: the directory is a file, not a directory, how to echo to developer?
+            DLLOG("DownloaderAppleImpl temp dir is a file!");
+            return;
+        }
+    }
+    else
+    {
+        NSURL *tempFileURL = [NSURL fileURLWithPath:tempFileDir];
+        if (NO == [fileManager createDirectoryAtURL:tempFileURL
+                        withIntermediateDirectories:YES
+                                         attributes:nil
+                                              error:nil])
+        {
+            // create directory failed
+            DLLOG("DownloaderAppleImpl create temp dir failed");
+            return;
+        }
+    }
+
+    [resumeData writeToFile:templFile atomically:YES];
+}
+
 #pragma mark - NSURLSessionTaskDelegate methods
 
 //@optional
@@ -472,15 +461,18 @@ namespace cocos2d { namespace network {
                 errorCode = cocos2d::network::DownloadTask::ERROR_ABORT;
                 errorMsg = @"downloadFile:fail abort";
             }
-
-            // fix Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory"
+            
+            NSString *tempFilePath = [NSString stringWithFormat:@"%s%s", [wrapper get]->storagePath.c_str(), _hints.tempFileNameSuffix.c_str()];
             if (error.code == 2 && [wrapper get]->storagePath.length() > 0) {
-                NSString *tempFilePath = [NSString stringWithFormat:@"%s%s", [wrapper get]->storagePath.c_str(), _hints.tempFileNameSuffix.c_str()];
+                // fix Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory"
                 NSFileManager *fileManager = [NSFileManager defaultManager];
                 [fileManager removeItemAtURL:[NSURL fileURLWithPath:tempFilePath] error:NULL];
                 [wrapper get]->storagePath = "";
             }
-                    
+            else {
+                [self saveResumeData: error.userInfo[NSURLSessionDownloadTaskResumeData] templFile:tempFilePath];
+            }
+            
             std::vector<unsigned char> buf; // just a placeholder
             _outer->onTaskFinish(*[wrapper get],
                              cocos2d::network::DownloadTask::ERROR_IMPL_INTERNAL,
