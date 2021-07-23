@@ -188,6 +188,13 @@ public:
      */
     void cross(const Vec3 &v);
 
+      /**
+     * Sets this vector to the cross product between itself and the specified vector.
+     *
+     * @param v The vector to compute the cross product with.
+     */
+    Vec3 crossProduct(const Vec3 &v) const;
+
     /**
      * Computes the cross product of the specified vectors and stores the result in dst.
      *
@@ -309,6 +316,11 @@ public:
      * Negates this vector.
      */
     inline void negate();
+
+     /**
+     * Negates this vector.
+     */
+    inline Vec3 getNegate() const;
 
     /**
      * Normalizes this vector.
@@ -580,6 +592,8 @@ public:
     static const Vec3 UNIT_Y;
     /** equals to Vec3(0,0,1) */
     static const Vec3 UNIT_Z;
+    /** equals to Vec3(0,0,-1) */
+    static const Vec3 FORWARD;
 };
 
 /**

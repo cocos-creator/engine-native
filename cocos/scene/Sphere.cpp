@@ -29,6 +29,11 @@
 namespace cc {
 namespace scene {
 
+Sphere::Sphere() noexcept {
+    _center = Vec3();
+    _radius = -1.0F;
+}
+
 int Sphere::interset(const Plane &plane) const {
     const float dot = plane.n.dot(_center);
     const float r   = _radius * plane.n.length();
@@ -60,10 +65,10 @@ void Sphere::mergePoint(const Vec3 &point) {
     }
 
     auto offset   = point - _center;
-    auto distance = offset.length();
+    const float distance = offset.length();
 
     if (distance > _radius) {
-        auto half = (distance - _radius) * 0.5F;
+        const float half = (distance - _radius) * 0.5F;
         _radius += half;
         offset.scale(half / distance);
         _center += offset;
@@ -96,7 +101,19 @@ void Sphere::mergeAABB(const AABB *aabb) {
     mergePoint(maxPos);
 }
 
-int Sphere::spherePlane(const Plane &plane) {
+void Sphere::mergeFrustum(const Frustum &frustum) {
+    const std::vector<Vec3> vertices{frustum.vertices.begin(), frustum.vertices.end()};
+
+    mergePoints(vertices);
+}
+
+void Sphere::mergePoints(const std::vector<Vec3> &vertices) {
+    for (const Vec3 &vertex : vertices) {
+        mergePoint(vertex);
+    }
+}
+
+int Sphere::spherePlane(const Plane &plane) const{
     const auto dot = cc::Vec3::dot(plane.n, _center);
     const auto r   = _radius * plane.n.length();
     if (dot + r < plane.d) {
@@ -108,7 +125,7 @@ int Sphere::spherePlane(const Plane &plane) {
     return 1;
 }
 
-bool Sphere::sphereFrustum(const Frustum &frustum) {
+bool Sphere::sphereFrustum(const Frustum &frustum) const {
     const auto &planes = frustum.planes;
     const auto *self   = this;
     return std::all_of(planes.begin(),

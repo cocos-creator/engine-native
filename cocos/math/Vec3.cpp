@@ -145,6 +145,14 @@ void Vec3::cross(const Vec3 &v1, const Vec3 &v2, Vec3 *dst) {
     MathUtil::crossVec3(&v1.x, &v2.x, &dst->x);
 }
 
+Vec3 Vec3::crossProduct(const Vec3& v) const {
+    return Vec3(
+        y * v.z - z * v.y,
+        z * v.x - x * v.z,
+        x * v.y - y * v.x
+    );
+}
+
 void Vec3::multiply(const Vec3 &v) {
     x *= v.x;
     y *= v.y;
@@ -273,5 +281,6 @@ const Vec3 Vec3::ONE(1.0f, 1.0f, 1.0f);
 const Vec3 Vec3::UNIT_X(1.0f, 0.0f, 0.0f);
 const Vec3 Vec3::UNIT_Y(0.0f, 1.0f, 0.0f);
 const Vec3 Vec3::UNIT_Z(0.0f, 0.0f, 1.0f);
+const Vec3 Vec3::FORWARD(0.0F, 0.0F, -1.0F);
 
 NS_CC_MATH_END

@@ -26,6 +26,7 @@
 #pragma once
 
 #include <array>
+
 #include "math/Vec3.h"
 
 namespace cc {
@@ -42,15 +43,36 @@ enum class ShapeEnums {
     SHAPE_FRUSTUM_ACCURATE = (1 << 8),
     SHAPE_CAPSULE          = (1 << 9),
 };
+
+/// Frustum planes.
+enum FrustumPlane {
+    PLANE_LEFT = 0,
+    PLANE_RIGHT,
+    PLANE_BOTTOM,
+    PLANE_TOP,
+    PLANE_NEAR,
+    PLANE_FAR,
+};
+
 struct Plane final {
     float d{0.F};
     Vec3  n;
+
+    void  define(const Vec3 &v0, const Vec3 &v1, const Vec3 &v2);
+    void  define(const Vec3 &normal, const Vec3 &point);
+    float distance(const Vec3 &point) const;
 };
 
 struct Frustum final {
     std::array<Vec3, 8>  vertices;
     std::array<Plane, 6> planes;
+
+    void                 define(const Vec3 &near, const Vec3 &far, const Mat4 &transform);
+    void                 defineOrtho(float orthoSize, float aspectRatio, float nearZ, float farZ, const Mat4 &transform);
     void                 update(const Mat4 &m, const Mat4 &inv);
+    void                 split(const Mat4 &projection, float near, float far);
+    void                 updatePlanes();
+    void                 zero();
     ShapeEnums           type{ShapeEnums::SHAPE_FRUSTUM};
 };
 

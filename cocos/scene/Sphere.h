@@ -34,12 +34,12 @@ namespace scene {
 
 class Sphere {
 public:
-    Sphere()               = default;
-    Sphere(const Sphere &) = delete;
-    Sphere(Sphere &&)      = delete;
+    Sphere() noexcept;
+    //Sphere(const Sphere &) = delete;
+    //Sphere(Sphere &&)      = delete;
     ~Sphere()              = default;
-    Sphere &operator=(const Sphere &) = delete;
-    Sphere &operator=(Sphere &&) = delete;
+    //Sphere &operator=(const Sphere &) = delete;
+    //Sphere &operator=(Sphere &&) = delete;
 
     inline float       getRadius() const { return _radius; }
     inline const Vec3 &getCenter() const { return _center; }
@@ -48,11 +48,13 @@ public:
 
     void define(const AABB &aabb);
     void mergeAABB(const AABB *aabb);
+    void mergeFrustum(const Frustum &frustum);
+    void mergePoints(const std::vector<Vec3> &vertices);
     void mergePoint(const Vec3 &point);
     bool interset(const Frustum &frustum) const;
     int  interset(const Plane &plane) const;
-    int  spherePlane(const Plane &plane);
-    bool sphereFrustum(const Frustum &frustum);
+    int  spherePlane(const Plane &plane) const;
+    bool sphereFrustum(const Frustum &frustum) const;
 
 private:
     float _radius{0};

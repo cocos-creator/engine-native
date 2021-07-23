@@ -65,6 +65,10 @@ inline void Vec3::negate()
     z = -z;
 }
 
+inline Vec3 Vec3::getNegate() const{
+    return Vec3(-x, -y, -z);
+}
+
 inline void Vec3::scale(float scalar)
 {
     x *= scalar;

@@ -31,6 +31,7 @@
 #include "math/Vec4.h"
 #include "renderer/gfx-base/GFXShader.h"
 #include "scene/Model.h"
+#include "Sphere.h"
 
 namespace cc {
 namespace scene {
@@ -69,13 +70,14 @@ struct Shadow {
     bool       enabled{false};
     bool       dirty{false};
     bool       shadowMapDirty{false};
-    bool       autoAdapt{false};
+    bool       fixedArea{false};
     ShadowType shadowType{ShadowType::PLANAR};
     float      distance{0.0F};
     Pass *     instancePass{nullptr};
     Pass *     planarPass{nullptr};
     float      nearValue{0.0F};
     float      farValue{0.0F};
+    float      range{0.0F};
     uint32_t   pcfType{0};
     float      bias{0.0F};
     float      normalBias{0.0F};
@@ -86,6 +88,10 @@ struct Shadow {
     Vec2 size;
     Vec3 normal;
     Mat4 matLight;
+
+    // local
+    Sphere cameraBoundingSphere;
+    Frustum dirLightFrustum;
 };
 
 struct Skybox {

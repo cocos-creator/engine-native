@@ -70,7 +70,6 @@ private:
     void                updateLightDescriptorSet(const scene::Camera *camera, gfx::CommandBuffer *cmdBuffer);
     bool                getLightPassIndex(const scene::Model *model, vector<uint> *lightPassIndices) const;
     void                lightCulling(const scene::Model *model);
-    gfx::DescriptorSet *getOrCreateDescriptorSet(const scene::Light *light);
 
     RenderPipeline *                  _pipeline = nullptr;
     vector<vector<scene::SubModel *>> _sortedSubModelsArray;
